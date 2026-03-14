@@ -57,13 +57,13 @@ export default function Sidebar({ onClose }) {
                         end={path === '/'}
                         onClick={onClose}
                         className={({ isActive }) =>
-                            `flex items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium transition-all duration-200 ${isActive
+                            `flex items-center gap-3 rounded-lg px-3 py-2.5 text-lg font-medium transition-all duration-200 ${isActive
                                 ? 'bg-sidebar-active text-white shadow-md shadow-primary-900/30'
                                 : 'text-indigo-200 hover:bg-sidebar-hover hover:text-white'
                             }`
                         }
                     >
-                        <Icon className="h-[18px] w-[18px]" />
+                        <Icon className="h-[28px] w-[28px]" />
                         {label}
                     </NavLink>
                 ))}
