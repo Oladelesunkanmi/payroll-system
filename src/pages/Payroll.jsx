@@ -1,0 +1,166 @@
+import { useState } from 'react';
+import { payrollRecords as initialRecords } from '../data/mockData';
+import { Calculator, FileSpreadsheet, CheckCircle2, Clock, DollarSign } from 'lucide-react';
+
+export default function Payroll() {
+    const [records, setRecords] = useState(
+        initialRecords.map((r) => ({ ...r }))
+    );
+    const [msg, setMsg] = useState('');
+
+    const handleFieldChange = (id, field, value) => {
+        setRecords((prev) =>
+            prev.map((r) => (r.id === id ? { ...r, [field]: Number(value) || 0 } : r))
+        );
+    };
+
+    const calcNet = (r) => (r.baseSalary + r.bonus - r.deductions).toFixed(2);
+
+    const handleCalc = (id) => {
+        setRecords((prev) =>
+            prev.map((r) =>
+                r.id === id ? { ...r, netPay: Number(calcNet(r)), status: 'Calculated' } : r
+            )
+        );
+    };
+
+    const handleGenerate = () => {
+        setRecords((prev) =>
+            prev.map((r) => ({ ...r, netPay: Number(calcNet(r)), status: 'Processed' }))
+        );
+        setMsg('Payroll generated for all employees — March 2026.');
+        setTimeout(() => setMsg(''), 4000);
+    };
+
+    const totalNet = records.reduce((s, r) => s + Number(calcNet(r)), 0);
+    const processed = records.filter((r) => r.status === 'Processed').length;
+
+    const badge = (status) => {
+        const m = {
+            Processed: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
+            Calculated: 'bg-blue-50 text-blue-700 ring-blue-600/20',
+            Pending: 'bg-amber-50 text-amber-700 ring-amber-600/20',
+        };
+        return `inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${m[status] || m.Pending}`;
+    };
+
+    return (
+        <div className="space-y-5 animate-fade-in">
+            {/* Header */}
+            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <h2 className="text-xl font-bold text-slate-800">Payroll Processing</h2>
+                    <p className="text-sm text-slate-500">March 2026 — {records.length} employees</p>
+                </div>
+                <button onClick={handleGenerate} className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-emerald-500/25 transition-all hover:bg-emerald-700">
+                    <FileSpreadsheet className="h-4 w-4 shrink-0" />
+                    <span>Generate Monthly Payroll</span>
+                </button>
+            </div>
+
+            {/* Success message */}
+            {msg && (
+                <div className="animate-scale-in flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                    <CheckCircle2 className="h-4 w-4 shrink-0" /> {msg}
+                </div>
+            )}
+
+            {/* Summary cards */}
+            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <div className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-100">
+                        <DollarSign className="h-5 w-5 text-violet-600" />
+                    </div>
+                    <div className="min-w-0">
+                        <p className="text-xs font-medium text-slate-500">Total Net Payroll</p>
+                        <p className="truncate text-lg font-bold text-slate-800">
+                            ${totalNet.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                        </p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-100">
+                        <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+                    </div>
+                    <div>
+                        <p className="text-xs font-medium text-slate-500">Processed</p>
+                        <p className="text-lg font-bold text-slate-800">{processed} / {records.length}</p>
+                    </div>
+                </div>
+                <div className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-100">
+                        <Clock className="h-5 w-5 text-amber-600" />
+                    </div>
+                    <div>
+                        <p className="text-xs font-medium text-slate-500">Pending</p>
+                        <p className="text-lg font-bold text-slate-800">{records.length - processed}</p>
+                    </div>
+                </div>
+            </div>
+
+            {/* Payroll table */}
+            <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+                <div className="overflow-x-auto">
+                    <table className="w-full min-w-[900px] text-left text-sm">
+                        <thead>
+                            <tr className="border-b border-slate-100 bg-slate-50">
+                                <th className="whitespace-nowrap px-4 py-3 font-semibold text-slate-600">Employee</th>
+                                <th className="whitespace-nowrap px-4 py-3 font-semibold text-slate-600">Department</th>
+                                <th className="whitespace-nowrap px-4 py-3 font-semibold text-slate-600 text-right">Base Salary</th>
+                                <th className="whitespace-nowrap px-4 py-3 font-semibold text-slate-600 text-right">Bonus</th>
+                                <th className="whitespace-nowrap px-4 py-3 font-semibold text-slate-600 text-right">Deductions</th>
+                                <th className="whitespace-nowrap px-4 py-3 font-semibold text-slate-600 text-right">Net Pay</th>
+                                <th className="whitespace-nowrap px-4 py-3 font-semibold text-slate-600 text-center">Status</th>
+                                <th className="whitespace-nowrap px-4 py-3 font-semibold text-slate-600 text-center">Action</th>
+                            </tr>
+                        </thead>
+                        <tbody className="divide-y divide-slate-100">
+                            {records.map((rec) => (
+                                <tr key={rec.id} className="transition-colors hover:bg-slate-50/70">
+                                    <td className="whitespace-nowrap px-4 py-3.5">
+                                        <p className="font-medium text-slate-800">{rec.employeeName}</p>
+                                        <p className="text-xs text-slate-400">{rec.employeeId}</p>
+                                    </td>
+                                    <td className="whitespace-nowrap px-4 py-3.5 text-slate-600">{rec.department}</td>
+                                    <td className="whitespace-nowrap px-4 py-3.5 text-right font-mono text-slate-700">
+                                        ${rec.baseSalary.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                    </td>
+                                    <td className="whitespace-nowrap px-4 py-3.5 text-right">
+                                        <input
+                                            type="number"
+                                            value={rec.bonus}
+                                            onChange={(e) => handleFieldChange(rec.id, 'bonus', e.target.value)}
+                                            className="w-24 rounded border border-slate-200 px-2 py-1 text-right text-sm text-slate-700 focus:border-primary-400 focus:ring-1 focus:ring-primary-100 focus:outline-none"
+                                        />
+                                    </td>
+                                    <td className="whitespace-nowrap px-4 py-3.5 text-right">
+                                        <input
+                                            type="number"
+                                            value={rec.deductions}
+                                            onChange={(e) => handleFieldChange(rec.id, 'deductions', e.target.value)}
+                                            className="w-24 rounded border border-slate-200 px-2 py-1 text-right text-sm text-slate-700 focus:border-primary-400 focus:ring-1 focus:ring-primary-100 focus:outline-none"
+                                        />
+                                    </td>
+                                    <td className="whitespace-nowrap px-4 py-3.5 text-right font-semibold text-slate-800">
+                                        ${calcNet(rec)}
+                                    </td>
+                                    <td className="whitespace-nowrap px-4 py-3.5 text-center">
+                                        <span className={badge(rec.status)}>{rec.status}</span>
+                                    </td>
+                                    <td className="whitespace-nowrap px-4 py-3.5 text-center">
+                                        <button
+                                            onClick={() => handleCalc(rec.id)}
+                                            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-primary-600 transition-colors hover:bg-primary-50"
+                                        >
+                                            <Calculator className="h-3.5 w-3.5" /> Calculate
+                                        </button>
+                                    </td>
+                                </tr>
+                            ))}
+                        </tbody>
+                    </table>
+                </div>
+            </div>
+        </div>
+    );
+}
