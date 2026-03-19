@@ -20,7 +20,7 @@ export default function Login() {
         // Simulate network delay
         await new Promise((r) => setTimeout(r, 800));
 
-        const result = login(email, password);
+        const result = await login(email, password);
         if (result.success) {
             navigate('/');
         } else {

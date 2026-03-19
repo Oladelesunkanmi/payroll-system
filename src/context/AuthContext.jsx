@@ -1,5 +1,5 @@
 import { createContext, useContext, useState, useEffect } from 'react';
-import { demoUsers } from '../data/mockData';
+import { api } from '../services/api';
 
 const AuthContext = createContext(null);
 
@@ -17,16 +17,14 @@ export function AuthProvider({ children }) {
         }
     }, [user]);
 
-    const login = (email, password) => {
-        const found = demoUsers.find(
-            (u) => u.email === email && u.password === password
-        );
-        if (!found) {
-            return { success: false, error: 'Invalid email or password' };
+    const login = async (email, password) => {
+        try {
+            const safeUser = await api.login({ email, password });
+            setUser(safeUser);
+            return { success: true };
+        } catch (error) {
+            return { success: false, error: error.message };
         }
-        const { password: _, ...safeUser } = found;
-        setUser(safeUser);
-        return { success: true };
     };
 
     const logout = () => {

@@ -1,29 +1,49 @@
-import { useState } from 'react';
-import { employees as initialEmployees, departments } from '../data/mockData';
+import { useState, useEffect } from 'react';
+import { api } from '../services/api';
 import {
     Search, Plus, Edit3, Trash2, X, Filter,
     ChevronLeft, ChevronRight,
 } from 'lucide-react';
 
-const emptyForm = { name: '', email: '', department: '', position: '', salary: '', hireDate: '' };
+const emptyForm = { firstName: '', lastName: '', email: '', departmentId: '', position: '', salary: '', hireDate: '' };
 
 export default function Employees() {
-    const [employeeList, setEmployeeList] = useState(initialEmployees);
+    const [employeeList, setEmployeeList] = useState([]);
+    const [departments, setDepartments] = useState([]);
     const [search, setSearch] = useState('');
     const [deptFilter, setDeptFilter] = useState('');
     const [modalOpen, setModalOpen] = useState(false);
     const [editingId, setEditingId] = useState(null);
     const [form, setForm] = useState(emptyForm);
     const [page, setPage] = useState(1);
+    const [loading, setLoading] = useState(true);
     const perPage = 8;
+
+    useEffect(() => {
+        fetchData();
+    }, []);
+
+    const fetchData = async () => {
+        setLoading(true);
+        try {
+            const [emps, depts] = await Promise.all([api.getEmployees(), api.getDepartments()]);
+            setEmployeeList(emps);
+            setDepartments(depts);
+        } catch (error) {
+            console.error('Failed to fetch data:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     /* Filtered list */
     const filtered = employeeList.filter((e) => {
+        const fullName = `${e.first_name || ''} ${e.last_name || ''}`.toLowerCase();
         const matchSearch =
-            e.name.toLowerCase().includes(search.toLowerCase()) ||
-            e.id.toLowerCase().includes(search.toLowerCase()) ||
-            e.email.toLowerCase().includes(search.toLowerCase());
-        const matchDept = deptFilter ? e.department === deptFilter : true;
+            fullName.includes(search.toLowerCase()) ||
+            String(e.id).includes(search) ||
+            (e.email || '').toLowerCase().includes(search.toLowerCase());
+        const matchDept = deptFilter ? e.department_id === Number(deptFilter) : true;
         return matchSearch && matchDept;
     });
 
@@ -34,25 +54,53 @@ export default function Employees() {
     const openAdd = () => { setEditingId(null); setForm(emptyForm); setModalOpen(true); };
     const openEdit = (emp) => {
         setEditingId(emp.id);
-        setForm({ name: emp.name, email: emp.email, department: emp.department, position: emp.position, salary: emp.salary, hireDate: emp.hireDate });
+        setForm({
+            firstName: emp.first_name,
+            lastName: emp.last_name,
+            email: emp.email,
+            departmentId: emp.department_id,
+            position: emp.position,
+            salary: emp.salary,
+            hireDate: emp.date_hired ? emp.date_hired.split('T')[0] : ''
+        });
         setModalOpen(true);
     };
-    const handleDelete = (id) => {
+    const handleDelete = async (id) => {
         if (confirm('Are you sure you want to delete this employee?')) {
-            setEmployeeList((prev) => prev.filter((e) => e.id !== id));
+            try {
+                await api.deleteEmployee(id);
+                setEmployeeList((prev) => prev.filter((e) => e.id !== id));
+            } catch (error) {
+                alert('Failed to delete employee: ' + error.message);
+            }
         }
     };
-    const handleSave = (e) => {
+    const handleSave = async (e) => {
         e.preventDefault();
-        if (editingId) {
-            setEmployeeList((prev) => prev.map((emp) =>
-                emp.id === editingId ? { ...emp, ...form, salary: Number(form.salary) } : emp
-            ));
-        } else {
-            const newId = `EMP${String(employeeList.length + 1).padStart(3, '0')}`;
-            setEmployeeList((prev) => [...prev, { ...form, id: newId, salary: Number(form.salary), status: 'Active', avatar: null }]);
+        const payload = {
+            first_name: form.firstName,
+            last_name: form.lastName,
+            email: form.email,
+            department_id: Number(form.departmentId),
+            position: form.position,
+            salary: Number(form.salary),
+            date_hired: new Date(form.hireDate).toISOString()
+        };
+
+        try {
+            if (editingId) {
+                const updated = await api.updateEmployee(editingId, payload);
+                setEmployeeList((prev) => prev.map((emp) =>
+                    emp.id === editingId ? updated : emp
+                ));
+            } else {
+                const created = await api.createEmployee(payload);
+                setEmployeeList((prev) => [...prev, created]);
+            }
+            setModalOpen(false);
+        } catch (error) {
+            alert('Failed to save employee: ' + error.message);
         }
-        setModalOpen(false);
     };
 
     const statusBadge = (status) => {
@@ -104,7 +152,7 @@ export default function Employees() {
                         className="h-10 w-full appearance-none rounded-lg border border-slate-200 bg-white pl-10 pr-8 text-sm text-slate-700 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 focus:outline-none sm:w-48"
                     >
                         <option value="">All Departments</option>
-                        {departments.map((d) => <option key={d} value={d}>{d}</option>)}
+                        {departments.map((d) => <option key={d.id} value={d.id}>{d.name}</option>)}
                     </select>
                 </div>
             </div>
@@ -131,19 +179,19 @@ export default function Employees() {
                                     <td className="whitespace-nowrap px-4 py-3.5">
                                         <div className="flex items-center gap-3">
                                             <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-full bg-gradient-to-br from-primary-400 to-primary-600 text-xs font-semibold text-white">
-                                                {emp.name.split(' ').map((n) => n[0]).join('')}
+                                                {emp.first_name?.[0]}{emp.last_name?.[0]}
                                             </div>
                                             <div className="min-w-0">
-                                                <p className="font-medium text-slate-800">{emp.name}</p>
+                                                <p className="font-medium text-slate-800">{emp.first_name} {emp.last_name}</p>
                                                 <p className="text-xs text-slate-400">{emp.email}</p>
                                             </div>
                                         </div>
                                     </td>
-                                    <td className="whitespace-nowrap px-4 py-3.5 text-slate-600">{emp.department}</td>
+                                    <td className="whitespace-nowrap px-4 py-3.5 text-slate-600">{emp.department?.name || 'Unassigned'}</td>
                                     <td className="whitespace-nowrap px-4 py-3.5 text-slate-600">{emp.position}</td>
-                                    <td className="whitespace-nowrap px-4 py-3.5 font-medium text-slate-800">${emp.salary.toLocaleString()}</td>
+                                    <td className="whitespace-nowrap px-4 py-3.5 font-medium text-slate-800">${emp.salary?.toLocaleString()}</td>
                                     <td className="whitespace-nowrap px-4 py-3.5">
-                                        <span className={statusBadge(emp.status)}>{emp.status}</span>
+                                        <span className={statusBadge('Active')}>Active</span>
                                     </td>
                                     <td className="whitespace-nowrap px-4 py-3.5 text-right">
                                         <div className="flex items-center justify-end gap-1">
@@ -232,17 +280,29 @@ export default function Employees() {
                         <form onSubmit={handleSave} className="space-y-4">
                             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
                                 <div>
-                                    <label className="mb-1 block text-sm font-medium text-slate-700">Name</label>
+                                    <label htmlFor="firstName" className="mb-1 block text-sm font-medium text-slate-700">First Name</label>
                                     <input
+                                        id="firstName"
                                         required
-                                        value={form.name}
-                                        onChange={(e) => setForm({ ...form, name: e.target.value })}
+                                        value={form.firstName}
+                                        onChange={(e) => setForm({ ...form, firstName: e.target.value })}
                                         className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 focus:outline-none"
                                     />
                                 </div>
                                 <div>
-                                    <label className="mb-1 block text-sm font-medium text-slate-700">Email</label>
+                                    <label htmlFor="lastName" className="mb-1 block text-sm font-medium text-slate-700">Last Name</label>
                                     <input
+                                        id="lastName"
+                                        required
+                                        value={form.lastName}
+                                        onChange={(e) => setForm({ ...form, lastName: e.target.value })}
+                                        className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 focus:outline-none"
+                                    />
+                                </div>
+                                <div>
+                                    <label htmlFor="email" className="mb-1 block text-sm font-medium text-slate-700">Email Address</label>
+                                    <input
+                                        id="email"
                                         required
                                         type="email"
                                         value={form.email}
@@ -251,15 +311,18 @@ export default function Employees() {
                                     />
                                 </div>
                                 <div>
-                                    <label className="mb-1 block text-sm font-medium text-slate-700">Department</label>
+                                    <label htmlFor="departmentId" className="mb-1 block text-sm font-medium text-slate-700">Department</label>
                                     <select
+                                        id="departmentId"
                                         required
-                                        value={form.department}
-                                        onChange={(e) => setForm({ ...form, department: e.target.value })}
+                                        value={form.departmentId}
+                                        onChange={(e) => setForm({ ...form, departmentId: e.target.value })}
                                         className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 focus:outline-none"
                                     >
-                                        <option value="">Select</option>
-                                        {departments.map((d) => <option key={d} value={d}>{d}</option>)}
+                                        <option value="">Select Department</option>
+                                        {Array.isArray(departments) && departments.map((d) => (
+                                            <option key={d.id} value={d.id}>{d.name}</option>
+                                        ))}
                                     </select>
                                 </div>
                                 <div>

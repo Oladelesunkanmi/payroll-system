@@ -1,3 +1,5 @@
+import { useState, useEffect } from 'react';
+import { api } from '../services/api';
 import { Users, Banknote, CircleDollarSign, ClipboardList, TrendingUp, TrendingDown } from 'lucide-react';
 import { Bar, Doughnut } from 'react-chartjs-2';
 import {
@@ -10,137 +12,166 @@ import {
     Tooltip,
     Legend,
 } from 'chart.js';
-import { employees, monthlyExpenses, departmentDistribution } from '../data/mockData';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend);
 
-const stats = [
-    {
-        label: 'Total Employees',
-        value: employees.length,
-        change: '+3 this month',
-        trend: 'up',
-        icon: Users,
-        color: 'from-blue-500 to-blue-600',
-        bgLight: 'bg-blue-50',
-        textColor: 'text-blue-600',
-    },
-    {
-        label: 'Payroll Processed',
-        value: '7 / 10',
-        change: '70% completed',
-        trend: 'up',
-        icon: Banknote,
-        color: 'from-emerald-500 to-emerald-600',
-        bgLight: 'bg-emerald-50',
-        textColor: 'text-emerald-600',
-    },
-    {
-        label: 'Total Salary Paid',
-        value: '$523K',
-        change: '+2.5% vs last month',
-        trend: 'up',
-        icon: CircleDollarSign,
-        color: 'from-violet-500 to-violet-600',
-        bgLight: 'bg-violet-50',
-        textColor: 'text-violet-600',
-    },
-    {
-        label: 'Pending Tasks',
-        value: '3',
-        change: 'Needs attention',
-        trend: 'down',
-        icon: ClipboardList,
-        color: 'from-amber-500 to-amber-600',
-        bgLight: 'bg-amber-50',
-        textColor: 'text-amber-600',
-    },
-];
-
-const barChartData = {
-    labels: monthlyExpenses.labels,
-    datasets: [
-        {
-            label: 'Payroll Expenses ($)',
-            data: monthlyExpenses.data,
-            backgroundColor: '#6366f1',
-            borderRadius: 6,
-            barThickness: 32,
-        },
-    ],
-};
-
-const barChartOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: {
-        legend: { display: false },
-        tooltip: {
-            backgroundColor: '#1e293b',
-            padding: 12,
-            cornerRadius: 8,
-            titleFont: { family: 'Inter' },
-            bodyFont: { family: 'Inter' },
-            callbacks: {
-                label: (ctx) => `$${ctx.raw.toLocaleString()}`,
-            },
-        },
-    },
-    scales: {
-        y: {
-            beginAtZero: true,
-            grid: { color: '#f1f5f9' },
-            ticks: {
-                font: { family: 'Inter', size: 12 },
-                color: '#94a3b8',
-                callback: (v) => `$${(v / 1000).toFixed(0)}K`,
-            },
-        },
-        x: {
-            grid: { display: false },
-            ticks: { font: { family: 'Inter', size: 12 }, color: '#94a3b8' },
-        },
-    },
-};
-
-const doughnutData = {
-    labels: departmentDistribution.labels,
-    datasets: [
-        {
-            data: departmentDistribution.data,
-            backgroundColor: departmentDistribution.colors,
-            borderWidth: 0,
-            hoverOffset: 4,
-        },
-    ],
-};
-
-const doughnutOptions = {
-    responsive: true,
-    maintainAspectRatio: false,
-    cutout: '65%',
-    plugins: {
-        legend: {
-            position: 'bottom',
-            labels: {
-                padding: 16,
-                usePointStyle: true,
-                pointStyleWidth: 8,
-                font: { family: 'Inter', size: 12 },
-                color: '#64748b',
-            },
-        },
-        tooltip: {
-            backgroundColor: '#1e293b',
-            padding: 12,
-            cornerRadius: 8,
-            titleFont: { family: 'Inter' },
-            bodyFont: { family: 'Inter' },
-        },
-    },
-};
-
 export default function Dashboard() {
+    const [statsData, setStatsData] = useState(null);
+    const [chartsData, setChartsData] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchDashboardData = async () => {
+            setLoading(true);
+            try {
+                const [stats, reports] = await Promise.all([
+                    api.getDashboardStats(),
+                    api.getReportsData()
+                ]);
+                setStatsData(stats);
+                setChartsData(reports);
+            } catch (error) {
+                console.error('Failed to fetch dashboard data:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchDashboardData();
+    }, []);
+
+    if (loading || !statsData) {
+        return (
+            <div className="flex h-96 items-center justify-center">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-200 border-t-primary-600"></div>
+            </div>
+        );
+    }
+
+    const stats = [
+        {
+            label: 'Total Employees',
+            value: statsData.total_employees,
+            change: '+3 this month',
+            trend: 'up',
+            icon: Users,
+            color: 'from-blue-500 to-blue-600',
+            bgLight: 'bg-blue-50',
+            textColor: 'text-blue-600',
+        },
+        {
+            label: 'Payroll Processed',
+            value: `${statsData.processed_payrolls} / ${statsData.processed_payrolls + statsData.pending_payrolls}`,
+            change: `${Math.round((statsData.processed_payrolls / (statsData.processed_payrolls + statsData.pending_payrolls || 1)) * 100)}% completed`,
+            trend: 'up',
+            icon: Banknote,
+            color: 'from-emerald-500 to-emerald-600',
+            bgLight: 'bg-emerald-50',
+            textColor: 'text-emerald-600',
+        },
+        {
+            label: 'Total Salary Paid',
+            value: `$${(statsData.total_salary_paid / 1000).toFixed(1)}K`,
+            change: '+2.5% vs last month',
+            trend: 'up',
+            icon: CircleDollarSign,
+            color: 'from-violet-500 to-violet-600',
+            bgLight: 'bg-violet-50',
+            textColor: 'text-violet-600',
+        },
+        {
+            label: 'Pending Tasks',
+            value: statsData.pending_payrolls,
+            change: statsData.pending_payrolls > 0 ? 'Needs attention' : 'All clear',
+            trend: statsData.pending_payrolls > 0 ? 'down' : 'up',
+            icon: ClipboardList,
+            color: 'from-amber-500 to-amber-600',
+            bgLight: 'bg-amber-50',
+            textColor: 'text-amber-600',
+        },
+    ];
+
+    const barChartData = {
+        labels: chartsData?.monthly_totals?.map(m => m.month) || [],
+        datasets: [
+            {
+                label: 'Payroll Expenses ($)',
+                data: chartsData?.monthly_totals?.map(m => m.total) || [],
+                backgroundColor: '#6366f1',
+                borderRadius: 6,
+                barThickness: 32,
+            },
+        ],
+    };
+
+    const barChartOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: {
+            legend: { display: false },
+            tooltip: {
+                backgroundColor: '#1e293b',
+                padding: 12,
+                cornerRadius: 8,
+                titleFont: { family: 'Inter' },
+                bodyFont: { family: 'Inter' },
+                callbacks: {
+                    label: (ctx) => `$${ctx.raw.toLocaleString()}`,
+                },
+            },
+        },
+        scales: {
+            y: {
+                beginAtZero: true,
+                grid: { color: '#f1f5f9' },
+                ticks: {
+                    font: { family: 'Inter', size: 12 },
+                    color: '#94a3b8',
+                    callback: (v) => `$${(v / 1000).toFixed(0)}K`,
+                },
+            },
+            x: {
+                grid: { display: false },
+                ticks: { font: { family: 'Inter', size: 12 }, color: '#94a3b8' },
+            },
+        },
+    };
+
+    const doughnutData = {
+        labels: chartsData?.department_distribution?.map(d => d.name) || [],
+        datasets: [
+            {
+                data: chartsData?.department_distribution?.map(d => d.count) || [],
+                backgroundColor: ['#6366f1', '#8b5cf6', '#a78bfa', '#c4b5fd', '#ddd6fe'],
+                borderWidth: 0,
+                hoverOffset: 4,
+            },
+        ],
+    };
+
+    const doughnutOptions = {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '65%',
+        plugins: {
+            legend: {
+                position: 'bottom',
+                labels: {
+                    padding: 16,
+                    usePointStyle: true,
+                    pointStyleWidth: 8,
+                    font: { family: 'Inter', size: 12 },
+                    color: '#64748b',
+                },
+            },
+            tooltip: {
+                backgroundColor: '#1e293b',
+                padding: 12,
+                cornerRadius: 8,
+                titleFont: { family: 'Inter' },
+                bodyFont: { family: 'Inter' },
+            },
+        },
+    };
     return (
         <div className="space-y-6">
             {/* Stats cards */}

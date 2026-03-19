@@ -1,3 +1,5 @@
+import { useState, useEffect } from 'react';
+import { api } from '../services/api';
 import { Bar, Doughnut } from 'react-chartjs-2';
 import {
     Chart as ChartJS,
@@ -9,55 +11,82 @@ import {
     Tooltip,
     Legend,
 } from 'chart.js';
-import { monthlyExpenses, departmentSalarySummary, departmentDistribution } from '../data/mockData';
 import { TrendingUp, Users, DollarSign } from 'lucide-react';
 
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend);
 
-const barData = {
-    labels: monthlyExpenses.labels,
-    datasets: [{
-        label: 'Payroll Total ($)',
-        data: monthlyExpenses.data,
-        backgroundColor: ['#c7d2fe', '#c7d2fe', '#c7d2fe', '#a5b4fc', '#818cf8', '#6366f1'],
-        borderRadius: 6,
-        barThickness: 36,
-    }],
-};
-
-const barOpts = {
-    responsive: true,
-    maintainAspectRatio: false,
-    plugins: { legend: { display: false }, tooltip: { backgroundColor: '#1e293b', padding: 12, cornerRadius: 8, callbacks: { label: (c) => `$${c.raw.toLocaleString()}` } } },
-    scales: {
-        y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { color: '#94a3b8', callback: (v) => `$${(v / 1000).toFixed(0)}K`, font: { family: 'Inter', size: 12 } } },
-        x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { family: 'Inter', size: 12 } } },
-    },
-};
-
-const salaryDistData = {
-    labels: departmentDistribution.labels,
-    datasets: [{
-        data: departmentSalarySummary.map(d => d.totalSalary),
-        backgroundColor: ['#6366f1', '#8b5cf6', '#a78bfa', '#c4b5fd', '#ddd6fe'],
-        borderWidth: 0,
-        hoverOffset: 4,
-    }],
-};
-
-const doughnutOpts = {
-    responsive: true,
-    maintainAspectRatio: false,
-    cutout: '60%',
-    plugins: {
-        legend: { position: 'bottom', labels: { padding: 14, usePointStyle: true, pointStyleWidth: 8, font: { family: 'Inter', size: 12 }, color: '#64748b' } },
-        tooltip: { backgroundColor: '#1e293b', padding: 12, cornerRadius: 8, callbacks: { label: (c) => `$${c.raw.toLocaleString()}` } },
-    },
-};
-
 export default function Reports() {
-    const totalSalary = departmentSalarySummary.reduce((s, d) => s + d.totalSalary, 0);
-    const totalEmp = departmentSalarySummary.reduce((s, d) => s + d.employees, 0);
+    const [reportsData, setReportsData] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchReports = async () => {
+            setLoading(true);
+            try {
+                const data = await api.getReportsData();
+                setReportsData(data);
+            } catch (error) {
+                console.error('Failed to fetch reports:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchReports();
+    }, []);
+
+    if (loading || !reportsData) {
+        return (
+            <div className="flex h-96 items-center justify-center">
+                <div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-200 border-t-primary-600"></div>
+            </div>
+        );
+    }
+
+    const { monthly_totals, department_distribution } = reportsData;
+
+    const barData = {
+        labels: monthly_totals?.map(m => m.month) || [],
+        datasets: [{
+            label: 'Payroll Total ($)',
+            data: monthly_totals?.map(m => m.total) || [],
+            backgroundColor: ['#c7d2fe', '#c7d2fe', '#c7d2fe', '#a5b4fc', '#818cf8', '#6366f1'],
+            borderRadius: 6,
+            barThickness: 36,
+        }],
+    };
+
+    const barOpts = {
+        responsive: true,
+        maintainAspectRatio: false,
+        plugins: { legend: { display: false }, tooltip: { backgroundColor: '#1e293b', padding: 12, cornerRadius: 8, callbacks: { label: (c) => `$${c.raw.toLocaleString()}` } } },
+        scales: {
+            y: { beginAtZero: true, grid: { color: '#f1f5f9' }, ticks: { color: '#94a3b8', callback: (v) => `$${(v / 1000).toFixed(0)}K`, font: { family: 'Inter', size: 12 } } },
+            x: { grid: { display: false }, ticks: { color: '#94a3b8', font: { family: 'Inter', size: 12 } } },
+        },
+    };
+
+    const salaryDistData = {
+        labels: department_distribution?.map(d => d.name) || [],
+        datasets: [{
+            data: department_distribution?.map(d => d.total_salary) || [],
+            backgroundColor: ['#6366f1', '#8b5cf6', '#a78bfa', '#c4b5fd', '#ddd6fe'],
+            borderWidth: 0,
+            hoverOffset: 4,
+        }],
+    };
+
+    const doughnutOpts = {
+        responsive: true,
+        maintainAspectRatio: false,
+        cutout: '60%',
+        plugins: {
+            legend: { position: 'bottom', labels: { padding: 14, usePointStyle: true, pointStyleWidth: 8, font: { family: 'Inter', size: 12 }, color: '#64748b' } },
+            tooltip: { backgroundColor: '#1e293b', padding: 12, cornerRadius: 8, callbacks: { label: (c) => `$${c.raw.toLocaleString()}` } },
+        },
+    };
+
+    const totalSalary = department_distribution?.reduce((s, d) => s + d.total_salary, 0) || 0;
+    const totalEmp = department_distribution?.reduce((s, d) => s + d.count, 0) || 0;
 
     return (
         <div className="space-y-6 animate-fade-in">
@@ -78,7 +107,7 @@ export default function Reports() {
                 </div>
                 <div className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-5 shadow-sm">
                     <div className="flex h-10 w-10 items-center justify-center rounded-lg bg-violet-100"><TrendingUp className="h-5 w-5 text-violet-600" /></div>
-                    <div><p className="text-xs font-medium text-slate-500">Avg Salary</p><p className="text-lg font-bold text-slate-800">${Math.round(totalSalary / totalEmp).toLocaleString()}</p></div>
+                    <div><p className="text-xs font-medium text-slate-500">Avg Salary</p><p className="text-lg font-bold text-slate-800">${totalEmp > 0 ? Math.round(totalSalary / totalEmp).toLocaleString() : 0}</p></div>
                 </div>
             </div>
 
@@ -113,12 +142,12 @@ export default function Reports() {
                             </tr>
                         </thead>
                         <tbody className="divide-y divide-slate-100">
-                            {departmentSalarySummary.map((d) => (
-                                <tr key={d.department} className="hover:bg-slate-50">
-                                    <td className="py-3 font-medium text-slate-800">{d.department}</td>
-                                    <td className="py-3 text-right text-slate-600">{d.employees}</td>
-                                    <td className="py-3 text-right font-medium text-slate-800">${d.totalSalary.toLocaleString()}</td>
-                                    <td className="py-3 text-right text-slate-600">${d.avgSalary.toLocaleString()}</td>
+                            {department_distribution?.map((d) => (
+                                <tr key={d.name} className="hover:bg-slate-50">
+                                    <td className="py-3 font-medium text-slate-800">{d.name}</td>
+                                    <td className="py-3 text-right text-slate-600">{d.count}</td>
+                                    <td className="py-3 text-right font-medium text-slate-800">${d.total_salary.toLocaleString()}</td>
+                                    <td className="py-3 text-right text-slate-600">${d.count > 0 ? Math.round(d.total_salary / d.count).toLocaleString() : 0}</td>
                                 </tr>
                             ))}
                         </tbody>

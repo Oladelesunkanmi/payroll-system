@@ -7,6 +7,7 @@ import Employees from './pages/Employees';
 import Payroll from './pages/Payroll';
 import Payslips from './pages/Payslips';
 import Reports from './pages/Reports';
+import Departments from './pages/Departments';
 import Settings from './pages/Settings';
 
 function ProtectedRoute({ children }) {
@@ -34,6 +35,7 @@ export default function App() {
             >
                 <Route index element={<Dashboard />} />
                 <Route path="employees" element={<Employees />} />
+                <Route path="departments" element={<Departments />} />
                 <Route path="payroll" element={<Payroll />} />
                 <Route path="payslips" element={<Payslips />} />
                 <Route path="reports" element={<Reports />} />

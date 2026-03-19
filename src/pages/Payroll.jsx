@@ -1,12 +1,27 @@
-import { useState } from 'react';
-import { payrollRecords as initialRecords } from '../data/mockData';
+import { useState, useEffect } from 'react';
+import { api } from '../services/api';
 import { Calculator, FileSpreadsheet, CheckCircle2, Clock, DollarSign } from 'lucide-react';
 
 export default function Payroll() {
-    const [records, setRecords] = useState(
-        initialRecords.map((r) => ({ ...r }))
-    );
+    const [records, setRecords] = useState([]);
+    const [loading, setLoading] = useState(true);
     const [msg, setMsg] = useState('');
+
+    useEffect(() => {
+        fetchPayrolls();
+    }, []);
+
+    const fetchPayrolls = async () => {
+        setLoading(true);
+        try {
+            const data = await api.getPayrolls();
+            setRecords(data);
+        } catch (error) {
+            console.error('Failed to fetch payrolls:', error);
+        } finally {
+            setLoading(false);
+        }
+    };
 
     const handleFieldChange = (id, field, value) => {
         setRecords((prev) =>
@@ -14,26 +29,41 @@ export default function Payroll() {
         );
     };
 
-    const calcNet = (r) => (r.baseSalary + r.bonus - r.deductions).toFixed(2);
+    const calcNet = (r) => (r.basic_salary + r.allowances - r.deductions).toFixed(2);
 
-    const handleCalc = (id) => {
-        setRecords((prev) =>
-            prev.map((r) =>
-                r.id === id ? { ...r, netPay: Number(calcNet(r)), status: 'Calculated' } : r
-            )
-        );
+    const handleCalc = async (rec) => {
+        const netPay = Number(calcNet(rec));
+        try {
+            const updated = await api.updatePayroll(rec.id, {
+                ...rec,
+                net_salary: netPay,
+                status: 'Calculated'
+            });
+            setRecords((prev) => prev.map((r) => (r.id === rec.id ? updated : r)));
+        } catch (error) {
+            alert('Failed to calculate payroll: ' + error.message);
+        }
     };
 
-    const handleGenerate = () => {
-        setRecords((prev) =>
-            prev.map((r) => ({ ...r, netPay: Number(calcNet(r)), status: 'Processed' }))
-        );
-        setMsg('Payroll generated for all employees — March 2026.');
-        setTimeout(() => setMsg(''), 4000);
+    const handleGenerate = async () => {
+        try {
+            await Promise.all(records.map(r => 
+                api.updatePayroll(r.id, {
+                    ...r,
+                    net_salary: Number(calcNet(r)),
+                    payment_status: 'Processed'
+                })
+            ));
+            fetchPayrolls();
+            setMsg('Payroll generated for all employees — March 2026.');
+            setTimeout(() => setMsg(''), 4000);
+        } catch (error) {
+            alert('Failed to generate payroll: ' + error.message);
+        }
     };
 
-    const totalNet = records.reduce((s, r) => s + Number(calcNet(r)), 0);
-    const processed = records.filter((r) => r.status === 'Processed').length;
+    const totalNet = records.reduce((s, r) => s + Number(r.net_salary || calcNet(r)), 0);
+    const processed = records.filter((r) => r.payment_status === 'Processed').length;
 
     const badge = (status) => {
         const m = {
@@ -118,18 +148,18 @@ export default function Payroll() {
                             {records.map((rec) => (
                                 <tr key={rec.id} className="transition-colors hover:bg-slate-50/70">
                                     <td className="whitespace-nowrap px-4 py-3.5">
-                                        <p className="font-medium text-slate-800">{rec.employeeName}</p>
-                                        <p className="text-xs text-slate-400">{rec.employeeId}</p>
+                                        <p className="font-medium text-slate-800">{rec.employee?.first_name} {rec.employee?.last_name}</p>
+                                        <p className="text-xs text-slate-400">EMP{String(rec.employee_id).padStart(3, '0')}</p>
                                     </td>
-                                    <td className="whitespace-nowrap px-4 py-3.5 text-slate-600">{rec.department}</td>
+                                    <td className="whitespace-nowrap px-4 py-3.5 text-slate-600">{rec.employee?.department?.name || 'Unassigned'}</td>
                                     <td className="whitespace-nowrap px-4 py-3.5 text-right font-mono text-slate-700">
-                                        ${rec.baseSalary.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                        ${rec.basic_salary?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                     </td>
                                     <td className="whitespace-nowrap px-4 py-3.5 text-right">
                                         <input
                                             type="number"
-                                            value={rec.bonus}
-                                            onChange={(e) => handleFieldChange(rec.id, 'bonus', e.target.value)}
+                                            value={rec.allowances}
+                                            onChange={(e) => handleFieldChange(rec.id, 'allowances', e.target.value)}
                                             className="w-24 rounded border border-slate-200 px-2 py-1 text-right text-sm text-slate-700 focus:border-primary-400 focus:ring-1 focus:ring-primary-100 focus:outline-none"
                                         />
                                     </td>
@@ -142,14 +172,14 @@ export default function Payroll() {
                                         />
                                     </td>
                                     <td className="whitespace-nowrap px-4 py-3.5 text-right font-semibold text-slate-800">
-                                        ${calcNet(rec)}
+                                        ${Number(rec.net_salary || calcNet(rec)).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                     </td>
                                     <td className="whitespace-nowrap px-4 py-3.5 text-center">
-                                        <span className={badge(rec.status)}>{rec.status}</span>
+                                        <span className={badge(rec.payment_status)}>{rec.payment_status}</span>
                                     </td>
                                     <td className="whitespace-nowrap px-4 py-3.5 text-center">
                                         <button
-                                            onClick={() => handleCalc(rec.id)}
+                                            onClick={() => handleCalc(rec)}
                                             className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-primary-600 transition-colors hover:bg-primary-50"
                                         >
                                             <Calculator className="h-3.5 w-3.5" /> Calculate
