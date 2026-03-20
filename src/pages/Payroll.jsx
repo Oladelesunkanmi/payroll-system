@@ -25,7 +25,14 @@ export default function Payroll() {
 
     const handleFieldChange = (id, field, value) => {
         setRecords((prev) =>
-            prev.map((r) => (r.id === id ? { ...r, [field]: Number(value) || 0 } : r))
+            prev.map((r) => {
+                if (r.id === id) {
+                    const updated = { ...r, [field]: Number(value) || 0 };
+                    // Recalculate net salary live
+                    return { ...updated, net_salary: Number(calcNet(updated)) };
+                }
+                return r;
+            })
         );
     };
 
@@ -37,7 +44,7 @@ export default function Payroll() {
             const updated = await api.updatePayroll(rec.id, {
                 ...rec,
                 net_salary: netPay,
-                status: 'Calculated'
+                payment_status: 'Calculated'
             });
             setRecords((prev) => prev.map((r) => (r.id === rec.id ? updated : r)));
         } catch (error) {
@@ -62,7 +69,7 @@ export default function Payroll() {
         }
     };
 
-    const totalNet = records.reduce((s, r) => s + Number(r.net_salary || calcNet(r)), 0);
+    const totalNet = records.reduce((s, r) => s + Number(r.net_salary), 0);
     const processed = records.filter((r) => r.payment_status === 'Processed').length;
 
     const badge = (status) => {
@@ -104,7 +111,7 @@ export default function Payroll() {
                     <div className="min-w-0">
                         <p className="text-xs font-medium text-slate-500">Total Net Payroll</p>
                         <p className="truncate text-lg font-bold text-slate-800">
-                            ${totalNet.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                            ₦{totalNet.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                         </p>
                     </div>
                 </div>
@@ -153,7 +160,7 @@ export default function Payroll() {
                                     </td>
                                     <td className="whitespace-nowrap px-4 py-3.5 text-slate-600">{rec.employee?.department?.name || 'Unassigned'}</td>
                                     <td className="whitespace-nowrap px-4 py-3.5 text-right font-mono text-slate-700">
-                                        ${rec.basic_salary?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                        ₦{rec.basic_salary?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                     </td>
                                     <td className="whitespace-nowrap px-4 py-3.5 text-right">
                                         <input
@@ -172,7 +179,7 @@ export default function Payroll() {
                                         />
                                     </td>
                                     <td className="whitespace-nowrap px-4 py-3.5 text-right font-semibold text-slate-800">
-                                        ${Number(rec.net_salary || calcNet(rec)).toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                        ₦{Number(rec.net_salary || calcNet(rec)).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                     </td>
                                     <td className="whitespace-nowrap px-4 py-3.5 text-center">
                                         <span className={badge(rec.payment_status)}>{rec.payment_status}</span>

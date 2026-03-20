@@ -189,7 +189,7 @@ export default function Employees() {
                                     </td>
                                     <td className="whitespace-nowrap px-4 py-3.5 text-slate-600">{emp.department?.name || 'Unassigned'}</td>
                                     <td className="whitespace-nowrap px-4 py-3.5 text-slate-600">{emp.position}</td>
-                                    <td className="whitespace-nowrap px-4 py-3.5 font-medium text-slate-800">${emp.salary?.toLocaleString()}</td>
+                                    <td className="whitespace-nowrap px-4 py-3.5 font-medium text-slate-800">₦{emp.salary?.toLocaleString()}</td>
                                     <td className="whitespace-nowrap px-4 py-3.5">
                                         <span className={statusBadge('Active')}>Active</span>
                                     </td>
@@ -264,8 +264,8 @@ export default function Employees() {
 
             {/* Add/Edit Modal */}
             {modalOpen && (
-                <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-                    <div className="animate-scale-in w-full max-w-lg rounded-2xl bg-white p-6 shadow-2xl">
+                <div className="fixed inset-0 z-[1000] flex items-center justify-center bg-black/50 p-4 backdrop-blur-sm">
+                    <div className="animate-scale-in w-full max-w-lg max-h-[90vh] overflow-y-auto rounded-2xl bg-white p-6 shadow-2xl custom-scrollbar">
                         <div className="mb-5 flex items-center justify-between">
                             <h3 className="text-lg font-bold text-slate-800">
                                 {editingId ? 'Edit Employee' : 'Add New Employee'}

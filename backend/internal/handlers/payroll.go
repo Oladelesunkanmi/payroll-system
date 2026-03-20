@@ -1,15 +1,43 @@
 package handlers
 
 import (
+	"time"
+
 	"github.com/Oladelesunkanmi/payroll-system/backend/internal/models"
 	"github.com/Oladelesunkanmi/payroll-system/backend/pkg/database"
 	"github.com/gofiber/fiber/v2"
 )
 
-// GetAllPayrolls returns a list of all payroll records
+// GetAllPayrolls returns a list of all payroll records for the current month
 func GetAllPayrolls(c *fiber.Ctx) error {
+	var employees []models.Employee
+	database.DB.Find(&employees)
+
+	now := time.Now()
+	monthStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+	monthEnd := monthStart.AddDate(0, 1, -1)
+
+	for _, emp := range employees {
+		var payroll models.Payroll
+		result := database.DB.Where("employee_id = ? AND period_start >= ? AND period_start <= ?", emp.ID, monthStart, monthEnd).First(&payroll)
+		if result.Error != nil {
+			// Create pending payroll for this month
+			newPayroll := models.Payroll{
+				EmployeeID:    emp.ID,
+				BasicSalary:   emp.Salary,
+				Allowances:    0,
+				Deductions:    0,
+				NetSalary:     emp.Salary,
+				PaymentStatus: "Pending",
+				PeriodStart:   monthStart,
+				PeriodEnd:     monthEnd,
+			}
+			database.DB.Create(&newPayroll)
+		}
+	}
+
 	var payrolls []models.Payroll
-	database.DB.Preload("Employee.Department").Find(&payrolls)
+	database.DB.Preload("Employee.Department").Where("period_start >= ? AND period_start <= ?", monthStart, monthEnd).Find(&payrolls)
 	return c.Status(200).JSON(payrolls)
 }
 

@@ -1,21 +1,47 @@
-import { useState } from 'react';
-import { payslipHistory } from '../data/mockData';
+import { useState, useEffect } from 'react';
+import { api } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import { Download, FileText, Eye, ChevronDown, ChevronUp } from 'lucide-react';
 
 export default function Payslips() {
-    const [selected, setSelected] = useState(payslipHistory[0]);
+    const { user } = useAuth();
+    const [slips, setSlips] = useState([]);
+    const [selected, setSelected] = useState(null);
     const [expanded, setExpanded] = useState(null);
+    const [loading, setLoading] = useState(true);
+
+    useEffect(() => {
+        const fetchSlips = async () => {
+            if (!user) return;
+            setLoading(true);
+            try {
+                // Using employee_id from user if available, else fallback to 1 for demo
+                const empId = user.employee_id || 1; 
+                const data = await api.getMyPayrolls(empId);
+                setSlips(data);
+                if (data.length > 0) setSelected(data[0]);
+            } catch (error) {
+                console.error('Failed to fetch payslips:', error);
+            } finally {
+                setLoading(false);
+            }
+        };
+        fetchSlips();
+    }, [user]);
 
     const handleDownload = (slip) => {
-        const text = `PAYSLIP - ${slip.month}\n\nBasic Salary: $${slip.basicSalary.toFixed(2)}\nAllowances: $${slip.allowances.toFixed(2)}\nDeductions: $${slip.deductions.toFixed(2)}\nNet Salary: $${slip.netSalary.toFixed(2)}\n\nStatus: ${slip.status}\nPaid: ${slip.paidDate}`;
+        const text = `PAYSLIP - ${new Date(slip.period_start).toLocaleDateString()}\n\nBasic Salary: ₦${slip.basic_salary.toFixed(2)}\nAllowances: ₦${slip.allowances.toFixed(2)}\nDeductions: ₦${slip.deductions.toFixed(2)}\nNet Salary: ₦${slip.net_salary.toFixed(2)}\n\nStatus: ${slip.payment_status}`;
         const blob = new Blob([text], { type: 'text/plain' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
         a.href = url;
-        a.download = `payslip-${slip.month.replace(/\s/g, '-').toLowerCase()}.txt`;
+        a.download = `payslip-${new Date(slip.period_start).getTime()}.txt`;
         a.click();
         URL.revokeObjectURL(url);
     };
+
+    if (loading) return <div className="flex h-64 items-center justify-center"><div className="h-8 w-8 animate-spin rounded-full border-4 border-primary-200 border-t-primary-600"></div></div>;
+    if (!selected) return <div className="py-12 text-center text-slate-500">No payslips found.</div>;
 
     return (
         <div className="space-y-6 animate-fade-in">
@@ -34,8 +60,8 @@ export default function Payslips() {
                                     <FileText className="h-5 w-5 text-primary-600" />
                                 </div>
                                 <div>
-                                    <h3 className="text-base font-semibold text-slate-800">Payslip — {selected.month}</h3>
-                                    <p className="text-xs text-slate-400">Paid on {selected.paidDate}</p>
+                                    <h3 className="text-base font-semibold text-slate-800">Payslip — {new Date(selected.period_start).toLocaleDateString(undefined, { month: 'long', year: 'numeric' })}</h3>
+                                    <p className="text-xs text-slate-400">Status: {selected.payment_status}</p>
                                 </div>
                             </div>
                             <button
@@ -54,11 +80,11 @@ export default function Payslips() {
                                 <div className="space-y-2">
                                     <div className="flex justify-between text-sm">
                                         <span className="text-slate-600">Basic Salary</span>
-                                        <span className="font-medium text-slate-800">${selected.basicSalary.toFixed(2)}</span>
+                                        <span className="font-medium text-slate-800">₦{selected.basic_salary.toFixed(2)}</span>
                                     </div>
                                     <div className="flex justify-between text-sm">
                                         <span className="text-slate-600">Allowances</span>
-                                        <span className="font-medium text-emerald-600">+${selected.allowances.toFixed(2)}</span>
+                                        <span className="font-medium text-emerald-600">+₦{selected.allowances.toFixed(2)}</span>
                                     </div>
                                 </div>
                             </div>
@@ -68,7 +94,7 @@ export default function Payslips() {
                                 <h4 className="mb-3 text-sm font-semibold text-slate-700">Deductions</h4>
                                 <div className="flex justify-between text-sm">
                                     <span className="text-slate-600">Total Deductions</span>
-                                    <span className="font-medium text-red-500">-${selected.deductions.toFixed(2)}</span>
+                                    <span className="font-medium text-red-500">-₦{selected.deductions.toFixed(2)}</span>
                                 </div>
                             </div>
 
@@ -76,7 +102,7 @@ export default function Payslips() {
                             <div className="rounded-lg border-2 border-primary-200 bg-primary-50 p-4">
                                 <div className="flex justify-between">
                                     <span className="text-sm font-semibold text-primary-700">Net Salary</span>
-                                    <span className="text-xl font-bold text-primary-700">${selected.netSalary.toFixed(2)}</span>
+                                    <span className="text-xl font-bold text-primary-700">₦{selected.net_salary.toFixed(2)}</span>
                                 </div>
                             </div>
                         </div>
@@ -87,7 +113,7 @@ export default function Payslips() {
                 <div className="rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
                     <h3 className="mb-4 text-base font-semibold text-slate-800">Payroll History</h3>
                     <div className="space-y-2">
-                        {payslipHistory.map((slip) => (
+                        {slips.map((slip) => (
                             <div key={slip.id}>
                                 <button
                                     onClick={() => { setSelected(slip); setExpanded(expanded === slip.id ? null : slip.id); }}
@@ -97,22 +123,22 @@ export default function Payslips() {
                                     <div className="flex items-center gap-3">
                                         <Eye className="h-4 w-4 text-slate-400" />
                                         <div>
-                                            <p className="text-sm font-medium text-slate-700">{slip.month}</p>
-                                            <p className="text-xs text-slate-400">${slip.netSalary.toFixed(2)}</p>
+                                            <p className="text-sm font-medium text-slate-700">{new Date(slip.period_start).toLocaleDateString(undefined, { month: 'short', year: 'numeric' })}</p>
+                                            <p className="text-xs text-slate-400">₦{slip.net_salary.toFixed(2)}</p>
                                         </div>
                                     </div>
                                     <div className="flex items-center gap-2">
-                                        <span className="inline-flex rounded-full bg-emerald-50 px-2 py-0.5 text-xs font-medium text-emerald-700 ring-1 ring-inset ring-emerald-600/20">
-                                            {slip.status}
+                                        <span className={`inline-flex rounded-full px-2 py-0.5 text-xs font-medium ring-1 ring-inset ${slip.payment_status === 'Processed' ? 'bg-emerald-50 text-emerald-700 ring-emerald-600/20' : 'bg-amber-50 text-amber-700 ring-amber-600/20'}`}>
+                                            {slip.payment_status}
                                         </span>
                                         {expanded === slip.id ? <ChevronUp className="h-4 w-4 text-slate-400" /> : <ChevronDown className="h-4 w-4 text-slate-400" />}
                                     </div>
                                 </button>
                                 {expanded === slip.id && (
                                     <div className="animate-scale-in mt-1 rounded-lg bg-slate-50 p-3 text-xs text-slate-600 space-y-1">
-                                        <p>Basic: ${slip.basicSalary.toFixed(2)}</p>
-                                        <p>Allowances: +${slip.allowances.toFixed(2)}</p>
-                                        <p>Deductions: -${slip.deductions.toFixed(2)}</p>
+                                        <p>Basic: ₦{slip.basic_salary.toFixed(2)}</p>
+                                        <p>Allowances: +₦{slip.allowances.toFixed(2)}</p>
+                                        <p>Deductions: -₦{slip.deductions.toFixed(2)}</p>
                                         <button onClick={() => handleDownload(slip)} className="mt-2 text-primary-600 hover:underline flex items-center gap-1">
                                             <Download className="h-3 w-3" /> Download
                                         </button>

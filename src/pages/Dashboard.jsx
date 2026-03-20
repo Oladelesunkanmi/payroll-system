@@ -70,7 +70,7 @@ export default function Dashboard() {
         },
         {
             label: 'Total Salary Paid',
-            value: `$${(statsData.total_salary_paid / 1000).toFixed(1)}K`,
+            value: `₦${(statsData.total_salary_paid / 1000).toFixed(1)}K`,
             change: '+2.5% vs last month',
             trend: 'up',
             icon: CircleDollarSign,
@@ -115,7 +115,7 @@ export default function Dashboard() {
                 titleFont: { family: 'Inter' },
                 bodyFont: { family: 'Inter' },
                 callbacks: {
-                    label: (ctx) => `$${ctx.raw.toLocaleString()}`,
+                    label: (ctx) => `₦${ctx.raw.toLocaleString()}`,
                 },
             },
         },
@@ -126,7 +126,7 @@ export default function Dashboard() {
                 ticks: {
                     font: { family: 'Inter', size: 12 },
                     color: '#94a3b8',
-                    callback: (v) => `$${(v / 1000).toFixed(0)}K`,
+                    callback: (v) => `₦${(v / 1000).toFixed(0)}K`,
                 },
             },
             x: {
