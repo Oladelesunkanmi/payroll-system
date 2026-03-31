@@ -14,13 +14,15 @@ export function AuthProvider({ children }) {
             localStorage.setItem('payroll_user', JSON.stringify(user));
         } else {
             localStorage.removeItem('payroll_user');
+            localStorage.removeItem('payroll_token');
         }
     }, [user]);
 
     const login = async (email, password) => {
         try {
-            const safeUser = await api.login({ email, password });
-            setUser(safeUser);
+            const { user: safeUser, token, employee_id } = await api.login({ email, password });
+            localStorage.setItem('payroll_token', token);
+            setUser({ ...safeUser, employee_id });
             return { success: true };
         } catch (error) {
             return { success: false, error: error.message };

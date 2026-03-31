@@ -1,6 +1,9 @@
 import { useState, useEffect } from 'react';
 import { api } from '../services/api';
-import { Users, Banknote, CircleDollarSign, ClipboardList, TrendingUp, TrendingDown } from 'lucide-react';
+import { 
+    Users, Banknote, CircleDollarSign, ClipboardList, TrendingUp, TrendingDown,
+    UserPlus, Edit2, UserMinus, CreditCard, LogIn, Activity
+} from 'lucide-react';
 import { Bar, Doughnut } from 'react-chartjs-2';
 import {
     Chart as ChartJS,
@@ -18,18 +21,21 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Title, Tool
 export default function Dashboard() {
     const [statsData, setStatsData] = useState(null);
     const [chartsData, setChartsData] = useState(null);
+    const [activities, setActivities] = useState([]);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
         const fetchDashboardData = async () => {
             setLoading(true);
             try {
-                const [stats, reports] = await Promise.all([
+                const [stats, reports, recentActivities] = await Promise.all([
                     api.getDashboardStats(),
-                    api.getReportsData()
+                    api.getReportsData(),
+                    api.getRecentActivity()
                 ]);
                 setStatsData(stats);
                 setChartsData(reports);
+                setActivities(recentActivities);
             } catch (error) {
                 console.error('Failed to fetch dashboard data:', error);
             } finally {
@@ -172,6 +178,21 @@ export default function Dashboard() {
             },
         },
     };
+    const iconMap = {
+        UserPlus, Edit2, UserMinus, CreditCard, LogIn, Activity
+    };
+
+    const formatRelativeTime = (dateString) => {
+        const date = new Date(dateString);
+        const now = new Date();
+        const diffInSeconds = Math.floor((now - date) / 1000);
+        
+        if (diffInSeconds < 60) return 'Just now';
+        if (diffInSeconds < 3600) return `${Math.floor(diffInSeconds / 60)}m ago`;
+        if (diffInSeconds < 86400) return `${Math.floor(diffInSeconds / 3600)}h ago`;
+        return `${Math.floor(diffInSeconds / 86400)}d ago`;
+    };
+
     return (
         <div className="space-y-6">
             {/* Stats cards */}
@@ -238,23 +259,38 @@ export default function Dashboard() {
                 </div>
             </div>
 
-            {/* Recent activity */}
             <div className="animate-fade-in rounded-xl border border-slate-200 bg-white p-6 shadow-sm">
-                <h3 className="mb-4 text-base font-semibold text-slate-800">Recent Activity</h3>
+                <div className="mb-4 flex items-center justify-between">
+                    <h3 className="text-base font-semibold text-slate-800">Recent Activity</h3>
+                    <Activity className="h-4 w-4 text-slate-400" />
+                </div>
                 <div className="space-y-4">
-                    {[
-                        { text: 'Payroll processed for Engineering department', time: '2 hours ago', type: 'success' },
-                        { text: 'New employee Sarah Johnson onboarded', time: '5 hours ago', type: 'info' },
-                        { text: 'Payslips generated for February 2026', time: '1 day ago', type: 'success' },
-                        { text: 'Pending payroll approval for Marketing team', time: '2 days ago', type: 'warning' },
-                    ].map((item, i) => (
-                        <div key={i} className="flex items-center gap-3 rounded-lg p-2 transition-colors hover:bg-slate-50">
-                            <div className={`h-2.5 w-2.5 rounded-full ${item.type === 'success' ? 'bg-emerald-500' : item.type === 'info' ? 'bg-blue-500' : 'bg-amber-500'
-                                }`} />
-                            <p className="flex-1 text-sm text-slate-600">{item.text}</p>
-                            <span className="text-xs text-slate-400">{item.time}</span>
+                    {activities.length > 0 ? (
+                        activities.map((item, i) => {
+                            const Icon = iconMap[item.icon] || Activity;
+                            return (
+                                <div key={item.id} className="flex items-center gap-4 rounded-lg p-2 transition-colors hover:bg-slate-50">
+                                    <div className={`flex h-8 w-8 items-center justify-center rounded-lg bg-slate-50 ${item.color.replace('text-', 'bg-').replace('500', '100')}`}>
+                                        <Icon className={`h-4 w-4 ${item.color}`} />
+                                    </div>
+                                    <div className="flex-1">
+                                        <p className="text-sm font-medium text-slate-700">{item.action}</p>
+                                        <p className="text-xs text-slate-500">{item.details}</p>
+                                    </div>
+                                    <div className="text-right">
+                                        <span className="text-xs font-medium text-slate-400">{formatRelativeTime(item.created_at)}</span>
+                                        {item.user && (
+                                            <p className="text-[10px] text-slate-300">by {item.user.username}</p>
+                                        )}
+                                    </div>
+                                </div>
+                            );
+                        })
+                    ) : (
+                        <div className="py-8 text-center text-sm text-slate-400">
+                            No recent activity found.
                         </div>
-                    ))}
+                    )}
                 </div>
             </div>
         </div>

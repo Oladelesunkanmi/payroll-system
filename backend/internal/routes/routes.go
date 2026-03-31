@@ -15,8 +15,11 @@ func SetupRoutes(app *fiber.App) {
 	auth.Post("/login", handlers.Login)
 	auth.Post("/signup", handlers.Signup)
 
-	// Employee Routes
-	employees := api.Group("/employees")
+	// Admin-Only Group
+	admin := api.Group("/", middleware.AdminOnly)
+
+	// Employee Routes (Admin only)
+	employees := admin.Group("/employees")
 	employees.Get("/", handlers.GetAllEmployees)
 	employees.Get("/:id", handlers.GetEmployee)
 	employees.Post("/", handlers.CreateEmployee)
@@ -25,20 +28,22 @@ func SetupRoutes(app *fiber.App) {
 
 	// Payroll Routes
 	payrolls := api.Group("/payrolls")
-	payrolls.Get("/", handlers.GetAllPayrolls)
-	payrolls.Get("/:id", handlers.GetPayroll)
+	payrolls.Get("/", middleware.AdminOnly, handlers.GetAllPayrolls)
+	payrolls.Get("/:id", middleware.AdminOnly, handlers.GetPayroll)
 	payrolls.Get("/employee/:employeeId", handlers.GetMyPayrolls)
-	payrolls.Post("/", handlers.CreatePayroll)
-	payrolls.Put("/:id", handlers.UpdatePayroll)
-	payrolls.Delete("/:id", handlers.DeletePayroll)
+	payrolls.Post("/", middleware.AdminOnly, handlers.CreatePayroll)
+	payrolls.Post("/bulk-transfer", middleware.AdminOnly, handlers.ProcessBulkTransfer)
+	payrolls.Put("/:id", middleware.AdminOnly, handlers.UpdatePayroll)
+	payrolls.Delete("/:id", middleware.AdminOnly, handlers.DeletePayroll)
 
-	// Stats Routes
-	stats := api.Group("/stats")
+	// Stats Routes (Admin only)
+	stats := admin.Group("/stats")
 	stats.Get("/dashboard", handlers.GetDashboardStats)
 	stats.Get("/reports", handlers.GetReportsData)
+	stats.Get("/activity", handlers.GetRecentActivity)
 
-	// Department Routes
-	departments := api.Group("/departments")
+	// Department Routes (Admin only)
+	departments := admin.Group("/departments")
 	departments.Get("/", handlers.GetAllDepartments)
 	departments.Get("/:id", handlers.GetDepartment)
 	departments.Post("/", handlers.CreateDepartment)

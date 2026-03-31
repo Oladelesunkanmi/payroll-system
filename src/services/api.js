@@ -1,10 +1,12 @@
 const BASE_URL = 'http://localhost:3000';
 
 const apiRequest = async (endpoint, method = 'GET', body = null) => {
+    const token = localStorage.getItem('payroll_token');
     const options = {
         method,
         headers: {
             'Content-Type': 'application/json',
+            ...(token && { Authorization: `Bearer ${token}` }),
         },
     };
 
@@ -55,5 +57,7 @@ export const api = {
     // Stats & Reports
     getDashboardStats: () => apiRequest('/api/stats/dashboard'),
     getReportsData: () => apiRequest('/api/stats/reports'),
+    getRecentActivity: () => apiRequest('/api/stats/activity'),
     getMyPayrolls: (employeeId) => apiRequest(`/api/payrolls/employee/${employeeId}`),
+    processBulkTransfer: () => apiRequest('/api/payrolls/bulk-transfer', 'POST'),
 };

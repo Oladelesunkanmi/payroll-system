@@ -5,7 +5,18 @@ import {
     ChevronLeft, ChevronRight,
 } from 'lucide-react';
 
-const emptyForm = { firstName: '', lastName: '', email: '', departmentId: '', position: '', salary: '', hireDate: '' };
+const emptyForm = { 
+    firstName: '', 
+    lastName: '', 
+    email: '', 
+    departmentId: '', 
+    position: '', 
+    salary: '', 
+    hireDate: '',
+    accountNumber: '',
+    bankCode: '',
+    bankName: ''
+};
 
 export default function Employees() {
     const [employeeList, setEmployeeList] = useState([]);
@@ -61,7 +72,10 @@ export default function Employees() {
             departmentId: emp.department_id,
             position: emp.position,
             salary: emp.salary,
-            hireDate: emp.date_hired ? emp.date_hired.split('T')[0] : ''
+            hireDate: emp.date_hired ? emp.date_hired.split('T')[0] : '',
+            accountNumber: emp.account_number || '',
+            bankCode: emp.bank_code || '',
+            bankName: emp.bank_name || ''
         });
         setModalOpen(true);
     };
@@ -84,7 +98,10 @@ export default function Employees() {
             department_id: Number(form.departmentId),
             position: form.position,
             salary: Number(form.salary),
-            date_hired: new Date(form.hireDate).toISOString()
+            date_hired: new Date(form.hireDate).toISOString(),
+            account_number: form.accountNumber,
+            bank_code: form.bankCode,
+            bank_name: form.bankName
         };
 
         try {
@@ -353,6 +370,42 @@ export default function Employees() {
                                         onChange={(e) => setForm({ ...form, hireDate: e.target.value })}
                                         className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 focus:outline-none"
                                     />
+                                </div>
+                            </div>
+
+                            <div className="border-t border-slate-100 pt-4">
+                                <h4 className="mb-3 text-sm font-semibold text-slate-800">Bank Details (for Paystack transfers)</h4>
+                                <div className="grid grid-cols-1 gap-4 sm:grid-cols-2">
+                                    <div className="sm:col-span-2">
+                                        <label className="mb-1 block text-sm font-medium text-slate-700">Bank Name</label>
+                                        <input
+                                            required
+                                            value={form.bankName}
+                                            onChange={(e) => setForm({ ...form, bankName: e.target.value })}
+                                            placeholder="e.g. Zenith Bank"
+                                            className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 focus:outline-none"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="mb-1 block text-sm font-medium text-slate-700">Account Number</label>
+                                        <input
+                                            required
+                                            value={form.accountNumber}
+                                            onChange={(e) => setForm({ ...form, accountNumber: e.target.value })}
+                                            placeholder="10-digit NUBAN"
+                                            className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 focus:outline-none"
+                                        />
+                                    </div>
+                                    <div>
+                                        <label className="mb-1 block text-sm font-medium text-slate-700">Bank Code</label>
+                                        <input
+                                            required
+                                            value={form.bankCode}
+                                            onChange={(e) => setForm({ ...form, bankCode: e.target.value })}
+                                            placeholder="e.g. 057"
+                                            className="h-10 w-full rounded-lg border border-slate-200 bg-white px-3 text-sm text-slate-700 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 focus:outline-none"
+                                        />
+                                    </div>
                                 </div>
                             </div>
                             <div className="flex justify-end gap-3 pt-2">

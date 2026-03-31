@@ -15,8 +15,11 @@ export default function Payslips() {
             if (!user) return;
             setLoading(true);
             try {
-                // Using employee_id from user if available, else fallback to 1 for demo
-                const empId = user.employee_id || 1; 
+                const empId = user.employee_id;
+                if (!empId) {
+                    setLoading(false);
+                    return;
+                }
                 const data = await api.getMyPayrolls(empId);
                 setSlips(data);
                 if (data.length > 0) setSelected(data[0]);

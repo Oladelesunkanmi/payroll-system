@@ -29,6 +29,12 @@ func GetDashboardStats(c *fiber.Ctx) error {
 	})
 }
 
+func GetRecentActivity(c *fiber.Ctx) error {
+	var activities []models.Activity
+	database.DB.Preload("User").Order("created_at desc").Limit(10).Find(&activities)
+	return c.JSON(activities)
+}
+
 func GetReportsData(c *fiber.Ctx) error {
 	// Monthly Payroll Totals (Last 6 months)
 	type MonthlyTotal struct {

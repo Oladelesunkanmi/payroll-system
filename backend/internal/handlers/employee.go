@@ -1,8 +1,10 @@
 package handlers
 
 import (
+	"fmt"
 	"github.com/Oladelesunkanmi/payroll-system/backend/internal/models"
 	"github.com/Oladelesunkanmi/payroll-system/backend/pkg/database"
+	"github.com/Oladelesunkanmi/payroll-system/backend/pkg/utils"
 	"github.com/gofiber/fiber/v2"
 )
 
@@ -32,6 +34,19 @@ func CreateEmployee(c *fiber.Ctx) error {
 	}
 
 	database.DB.Create(&employee)
+	database.DB.Preload("Department").First(&employee, employee.ID)
+
+	// Log Activity
+	userID := c.Locals("user_id").(uint)
+	utils.LogActivity(
+		"Employee Created",
+		"employees",
+		fmt.Sprintf("Added %s %s to %s", employee.FirstName, employee.LastName, employee.Department.Name),
+		"UserPlus",
+		"text-emerald-500",
+		userID,
+	)
+
 	return c.Status(201).JSON(employee)
 }
 
@@ -49,6 +64,19 @@ func UpdateEmployee(c *fiber.Ctx) error {
 	}
 
 	database.DB.Save(&employee)
+	database.DB.Preload("Department").First(&employee, employee.ID)
+
+	// Log Activity
+	userID := c.Locals("user_id").(uint)
+	utils.LogActivity(
+		"Employee Updated",
+		"employees",
+		fmt.Sprintf("Updated details for %s %s", employee.FirstName, employee.LastName),
+		"Edit2",
+		"text-blue-500",
+		userID,
+	)
+
 	return c.Status(200).JSON(employee)
 }
 
@@ -62,5 +90,17 @@ func DeleteEmployee(c *fiber.Ctx) error {
 	}
 
 	database.DB.Delete(&employee)
+
+	// Log Activity
+	userID := c.Locals("user_id").(uint)
+	utils.LogActivity(
+		"Employee Deleted",
+		"employees",
+		fmt.Sprintf("Removed %s %s from the system", employee.FirstName, employee.LastName),
+		"UserMinus",
+		"text-red-500",
+		userID,
+	)
+
 	return c.Status(204).SendString("Employee deleted successfully")
 }
