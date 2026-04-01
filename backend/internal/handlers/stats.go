@@ -57,9 +57,9 @@ func GetReportsData(c *fiber.Ctx) error {
 		TotalSalary float64 `json:"total_salary"`
 	}
 	var deptDists []DeptDist
-	database.DB.Table("departments").
+	database.DB.Model(&models.Department{}).
 		Select("departments.name, COUNT(DISTINCT employees.id) as count, COALESCE(SUM(employees.salary), 0) as total_salary").
-		Joins("LEFT JOIN employees ON employees.department_id = departments.id").
+		Joins("LEFT JOIN employees ON employees.department_id = departments.id AND employees.deleted_at IS NULL").
 		Group("departments.name").
 		Scan(&deptDists)
 
