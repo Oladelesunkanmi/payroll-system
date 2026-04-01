@@ -45,8 +45,8 @@ func GetReportsData(c *fiber.Ctx) error {
 	// This is a simplified version; real app might need more complex grouping
 	database.DB.Model(&models.Payroll{}).
 		Select("to_char(period_start, 'Mon YYYY') as month, SUM(net_salary) as total").
-		Group("month, period_start").
-		Order("period_start").
+		Group("month").
+		Order("MIN(period_start)").
 		Limit(6).
 		Scan(&monthlyTotals)
 
@@ -58,9 +58,8 @@ func GetReportsData(c *fiber.Ctx) error {
 	}
 	var deptDists []DeptDist
 	database.DB.Table("departments").
-		Select("departments.name, count(employees.id) as count, sum(payrolls.net_salary) as total_salary").
-		Joins("left join employees on employees.department_id = departments.id").
-		Joins("left join payrolls on payrolls.employee_id = employees.id").
+		Select("departments.name, COUNT(DISTINCT employees.id) as count, COALESCE(SUM(employees.salary), 0) as total_salary").
+		Joins("LEFT JOIN employees ON employees.department_id = departments.id").
 		Group("departments.name").
 		Scan(&deptDists)
 
