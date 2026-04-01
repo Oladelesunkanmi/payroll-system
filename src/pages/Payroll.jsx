@@ -1,12 +1,15 @@
-import { useState, useEffect } from 'react';
+import { useState, useEffect, useRef, useCallback } from 'react';
 import { api } from '../services/api';
-import { Calculator, FileSpreadsheet, CheckCircle2, Clock, DollarSign } from 'lucide-react';
+import toast from 'react-hot-toast';
+import { Calculator, FileSpreadsheet, CheckCircle2, Clock, DollarSign, Info } from 'lucide-react';
 
 export default function Payroll() {
     const [records, setRecords] = useState([]);
     const [loading, setLoading] = useState(true);
     const [processing, setProcessing] = useState(false);
     const [msg, setMsg] = useState('');
+    const [saving, setSaving] = useState(false);
+    const saveTimeoutRef = useRef(null);
 
     useEffect(() => {
         fetchPayrolls();
@@ -24,22 +27,120 @@ export default function Payroll() {
         }
     };
 
+    const calculateNigerianPIT = (monthlyGross) => {
+        const annualGross = monthlyGross * 12;
+        if (annualGross <= 0) return 0;
+
+        // 1. Statutory Deductions (Standard 50-30-20 split)
+        const basic = annualGross * 0.50;
+        const housing = annualGross * 0.30;
+        const transport = annualGross * 0.20;
+
+        const pension = (basic + housing + transport) * 0.08;
+        const nhf = basic * 0.025;
+        const totalDeductions = pension + nhf;
+
+        // 2. Consolidated Relief Allowance (CRA)
+        let reliefBase = 200000;
+        if (0.01 * annualGross > reliefBase) reliefBase = 0.01 * annualGross;
+        const cra = reliefBase + (0.20 * annualGross);
+
+        // 3. Taxable Income
+        const taxableIncome = annualGross - cra - totalDeductions;
+        if (taxableIncome <= 0) return Number(((annualGross * 0.01) / 12).toFixed(2));
+
+        // 4. Annual PIT Brackets
+        let annualTax = 0;
+        let remaining = taxableIncome;
+
+        const brackets = [
+            { limit: 300000, rate: 0.07 },
+            { limit: 300000, rate: 0.11 },
+            { limit: 500000, rate: 0.15 },
+            { limit: 500000, rate: 0.19 },
+            { limit: 1600000, rate: 0.21 },
+            { limit: Infinity, rate: 0.24 }
+        ];
+
+        for (const bracket of brackets) {
+            if (remaining > bracket.limit) {
+                annualTax += bracket.limit * bracket.rate;
+                remaining -= bracket.limit;
+            } else {
+                annualTax += remaining * bracket.rate;
+                remaining = 0;
+                break;
+            }
+        }
+
+        const monthlyTax = annualTax / 12;
+        const minTax = (annualGross * 0.01) / 12;
+        return Number(Math.max(monthlyTax, minTax).toFixed(2));
+    };
+
+    const saveRecord = useCallback(async (rec) => {
+        setSaving(true);
+        try {
+            await api.updatePayroll(rec.id, {
+                ...rec,
+                net_salary: Number(calcNet(rec)),
+                payment_status: 'Calculated'
+            });
+            // Quiet save - only indicate in UI, no noisy toast every time
+        } catch (error) {
+            toast.error('Auto-save failed: ' + error.message);
+        } finally {
+            setSaving(false);
+        }
+    }, []);
+
     const handleFieldChange = (id, field, value) => {
         setRecords((prev) =>
             prev.map((r) => {
                 if (r.id === id) {
-                    const updated = { ...r, [field]: Number(value) || 0 };
+                    const numVal = Number(value) || 0;
+                    let updated = { ...r, [field]: numVal };
+
+                    // Auto-recalculate tax using official Nigerian law
+                    if (field === 'basic_salary' || field === 'allowances') {
+                        const newGross = (field === 'basic_salary' ? numVal : r.basic_salary) + (field === 'allowances' ? numVal : r.allowances);
+                        updated.tax = calculateNigerianPIT(newGross);
+                    }
+
                     // Recalculate net salary live
-                    return { ...updated, net_salary: Number(calcNet(updated)) };
+                    const final = { ...updated, net_salary: Number(calcNet(updated)) };
+
+                    // Debounced Auto-Save
+                    if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
+                    saveTimeoutRef.current = setTimeout(() => {
+                        saveRecord(final);
+                    }, 8000); // 800ms debounce
+
+                    return final;
                 }
                 return r;
             })
         );
     };
 
-    const calcNet = (r) => (r.basic_salary + r.allowances - r.deductions).toFixed(2);
+    const calcNet = (r) => (r.basic_salary + r.allowances - r.deductions - r.tax).toFixed(2);
+
+    const handleCalc = async (rec) => {
+        try {
+            await api.updatePayroll(rec.id, {
+                ...rec,
+                net_salary: Number(calcNet(rec)),
+                payment_status: 'Calculated'
+            });
+            toast.success(`Payroll for ${rec.employee.first_name} recalculated and saved!`);
+            fetchPayrolls();
+        } catch (error) {
+            toast.error('Failed to update record: ' + error.message);
+        }
+    };
 
     const handleGenerate = async () => {
+        const loading = toast.loading('Generating all monthly records...');
         try {
             await Promise.all(records.map(r => 
                 api.updatePayroll(r.id, {
@@ -49,24 +150,23 @@ export default function Payroll() {
                 })
             ));
             fetchPayrolls();
-            setMsg('Monthly payroll records generated and pending processing.');
-            setTimeout(() => setMsg(''), 4000);
+            toast.success('All monthly payroll records generated!', { id: loading });
         } catch (error) {
-            alert('Failed to generate payroll: ' + error.message);
+            toast.error('Failed to generate payroll: ' + error.message, { id: loading });
         }
     };
 
     const handlePaystack = async () => {
         if (!window.confirm('This will initiate bulk transfers via Paystack. Continue?')) return;
         
+        const loading = toast.loading('Initiating bulk transfers via Paystack...');
         setProcessing(true);
         try {
             const result = await api.processBulkTransfer();
-            setMsg(`Successfully initiated transfers for ${result.count} employees via Paystack.`);
+            toast.success(`Successfully initiated transfers for ${result.count} employees!`, { id: loading });
             fetchPayrolls();
-            setTimeout(() => setMsg(''), 5000);
         } catch (error) {
-            alert('Paystack processing failed: ' + error.message);
+            toast.error('Paystack processing failed: ' + error.message, { id: loading });
         } finally {
             setProcessing(false);
         }
@@ -90,7 +190,14 @@ export default function Payroll() {
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
                     <h2 className="text-xl font-bold text-slate-800">Payroll Processing</h2>
-                    <p className="text-sm text-slate-500">March 2026 — {records.length} employees</p>
+                    <div className="flex items-center gap-2">
+                        <p className="text-sm text-slate-500">March 2026 — {records.length} employees</p>
+                        {saving && (
+                            <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-primary-500 animate-pulse">
+                                <Clock className="h-3 w-3" /> Auto-Saving
+                            </span>
+                        )}
+                    </div>
                 </div>
                 <div className="flex gap-3">
                     <button onClick={handleGenerate} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">
@@ -163,6 +270,22 @@ export default function Payroll() {
                                 <th className="whitespace-nowrap px-4 py-3 font-semibold text-slate-600 text-right">Base Salary</th>
                                 <th className="whitespace-nowrap px-4 py-3 font-semibold text-slate-600 text-right">Bonus</th>
                                 <th className="whitespace-nowrap px-4 py-3 font-semibold text-slate-600 text-right">Deductions</th>
+                                <th className="group relative whitespace-nowrap px-4 py-3 font-semibold text-slate-600 text-right text-red-500">
+                                    <div className="flex items-center justify-end gap-1.5">
+                                        Tax
+                                        <Info className="h-3.5 w-3.5 text-slate-400 cursor-help" />
+                                    </div>
+                                    {/* Tooltip */}
+                                    <div className="invisible absolute right-0 top-full z-50 mt-2 w-64 rounded-xl border border-slate-200 bg-white p-3.5 text-left text-xs font-normal text-slate-600 shadow-xl shadow-slate-200/60 transition-all group-hover:visible">
+                                        <p className="mb-2 font-bold text-slate-800 uppercase tracking-wider">Nigerian PAYE Rules</p>
+                                        <ul className="space-y-1.5 list-disc pl-3">
+                                            <li><span className="font-medium">Consolidated Relief (CRA):</span> Higher of ₦200k or 1% Gross + 20% Gross (Annualized).</li>
+                                            <li><span className="font-medium">Pension:</span> 8% of Basic+Housing+Transport</li>
+                                            <li><span className="font-medium">NHF:</span> 2.5% of Basic</li>
+                                            <li><span className="font-medium">Taxable:</span> Gross - CRA - Deductions</li>
+                                        </ul>
+                                    </div>
+                                </th>
                                 <th className="whitespace-nowrap px-4 py-3 font-semibold text-slate-600 text-right">Net Pay</th>
                                 <th className="whitespace-nowrap px-4 py-3 font-semibold text-slate-600 text-center">Status</th>
                                 <th className="whitespace-nowrap px-4 py-3 font-semibold text-slate-600 text-center">Action</th>
@@ -176,15 +299,20 @@ export default function Payroll() {
                                         <p className="text-xs text-slate-400">EMP{String(rec.employee_id).padStart(3, '0')}</p>
                                     </td>
                                     <td className="whitespace-nowrap px-4 py-3.5 text-slate-600">{rec.employee?.department?.name || 'Unassigned'}</td>
-                                    <td className="whitespace-nowrap px-4 py-3.5 text-right font-mono text-slate-700">
-                                        ₦{rec.basic_salary?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                                    <td className="whitespace-nowrap px-4 py-3.5 text-right">
+                                        <input
+                                            type="number"
+                                            value={rec.basic_salary}
+                                            onChange={(e) => handleFieldChange(rec.id, 'basic_salary', e.target.value)}
+                                            className="w-32 rounded border border-slate-200 px-2 py-1 text-right text-sm font-mono text-slate-700 transition-all focus:border-primary-400 focus:ring-4 focus:ring-primary-100 focus:outline-none"
+                                        />
                                     </td>
                                     <td className="whitespace-nowrap px-4 py-3.5 text-right">
                                         <input
                                             type="number"
                                             value={rec.allowances}
                                             onChange={(e) => handleFieldChange(rec.id, 'allowances', e.target.value)}
-                                            className="w-24 rounded border border-slate-200 px-2 py-1 text-right text-sm text-slate-700 focus:border-primary-400 focus:ring-1 focus:ring-primary-100 focus:outline-none"
+                                            className="w-24 rounded border border-slate-200 px-2 py-1 text-right text-sm text-slate-700 transition-all focus:border-primary-400 focus:ring-4 focus:ring-primary-100 focus:outline-none"
                                         />
                                     </td>
                                     <td className="whitespace-nowrap px-4 py-3.5 text-right">
@@ -192,8 +320,11 @@ export default function Payroll() {
                                             type="number"
                                             value={rec.deductions}
                                             onChange={(e) => handleFieldChange(rec.id, 'deductions', e.target.value)}
-                                            className="w-24 rounded border border-slate-200 px-2 py-1 text-right text-sm text-slate-700 focus:border-primary-400 focus:ring-1 focus:ring-primary-100 focus:outline-none"
+                                            className="w-24 rounded border border-slate-200 px-2 py-1 text-right text-sm text-slate-700 transition-all focus:border-primary-400 focus:ring-4 focus:ring-primary-100 focus:outline-none"
                                         />
+                                    </td>
+                                    <td className="whitespace-nowrap px-4 py-3.5 text-right font-mono text-red-500">
+                                        ₦{rec.tax?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                     </td>
                                     <td className="whitespace-nowrap px-4 py-3.5 text-right font-semibold text-slate-800">
                                         ₦{Number(rec.net_salary || calcNet(rec)).toLocaleString(undefined, { minimumFractionDigits: 2 })}

@@ -1,5 +1,6 @@
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
+import { motion } from 'framer-motion';
 import {
     LayoutDashboard,
     Users,
@@ -33,51 +34,68 @@ export default function Sidebar({ onClose }) {
     };
 
     return (
-        <div className="flex h-full flex-col bg-sidebar text-white">
+        <div className="flex h-full flex-col bg-sidebar text-white lg:glass-dark lg:border-r lg:border-white/5">
             {/* Logo */}
-            <div className="flex h-16 items-center justify-between px-5">
-                <div className="flex items-center gap-2.5">
-                    <div className="flex h-9 w-9 items-center justify-center rounded-lg bg-primary-500">
-                        <CircleDollarSign className="h-5 w-5 text-white" />
+            <div className="flex h-20 items-center justify-between px-6">
+                <div className="flex items-center gap-3">
+                    <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 shadow-lg shadow-primary-500/20">
+                        <CircleDollarSign className="h-6 w-6 text-white" />
                     </div>
-                    <span className="text-lg font-bold tracking-tight">PayrollPro</span>
+                    <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-white to-white/70 bg-clip-text text-transparent">PayrollPro</span>
                 </div>
                 <button
                     onClick={onClose}
-                    className="rounded-lg p-1.5 text-white/60 hover:bg-white/10 hover:text-white lg:hidden"
+                    className="rounded-lg p-2 text-white/60 hover:bg-white/10 hover:text-white lg:hidden"
                 >
                     <X className="h-5 w-5" />
                 </button>
             </div>
 
             {/* Navigation */}
-            <nav className="mt-4 flex-1 space-y-1 px-3">
-                {menuItems.map(({ label, icon: Icon, path }) => (
-                    <NavLink
+            <nav className="mt-6 flex-1 space-y-1.5 px-4">
+                {menuItems.map(({ label, icon: Icon, path }, i) => (
+                    <motion.div
                         key={path}
-                        to={path}
-                        end={path === '/'}
-                        onClick={onClose}
-                        className={({ isActive }) =>
-                            `flex items-center gap-3 rounded-lg px-3 py-2.5 text-lg font-medium transition-all duration-200 ${isActive
-                                ? 'bg-sidebar-active text-white shadow-md shadow-primary-900/30'
-                                : 'text-indigo-200 hover:bg-sidebar-hover hover:text-white'
-                            }`
-                        }
+                        initial={{ opacity: 0, x: -10 }}
+                        animate={{ opacity: 1, x: 0 }}
+                        transition={{ delay: i * 0.05 }}
                     >
-                        <Icon className="h-[28px] w-[28px]" />
-                        {label}
-                    </NavLink>
+                        <NavLink
+                            to={path}
+                            end={path === '/'}
+                            onClick={onClose}
+                            className={({ isActive }) =>
+                                `group relative flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all duration-300 ${isActive
+                                    ? 'bg-primary-500/10 text-primary-400'
+                                    : 'text-slate-400 hover:bg-white/5 hover:text-white'
+                                }`
+                            }
+                        >
+                            {({ isActive }) => (
+                                <>
+                                    <Icon className={`h-5 w-5 transition-colors duration-300 ${isActive ? 'text-primary-400' : 'text-slate-400 group-hover:text-white'}`} />
+                                    <span>{label}</span>
+                                    {isActive && (
+                                        <motion.div
+                                            layoutId="active-nav"
+                                            className="absolute left-0 h-6 w-1 rounded-r-full bg-primary-500"
+                                            transition={{ type: "spring", stiffness: 300, damping: 30 }}
+                                        />
+                                    )}
+                                </>
+                            )}
+                        </NavLink>
+                    </motion.div>
                 ))}
             </nav>
 
             {/* Logout */}
-            <div className="border-t border-white/10 p-3">
+            <div className="border-t border-white/5 p-4">
                 <button
                     onClick={handleLogout}
-                    className="flex w-full items-center gap-3 rounded-lg px-3 py-2.5 text-sm font-medium text-indigo-200 transition-all duration-200 hover:bg-red-500/20 hover:text-red-300"
+                    className="flex w-full items-center gap-3 rounded-xl px-4 py-3 text-sm font-medium text-slate-400 transition-all duration-300 hover:bg-red-500/10 hover:text-red-400"
                 >
-                    <LogOut className="h-[18px] w-[18px]" />
+                    <LogOut className="h-5 w-5" />
                     Logout
                 </button>
             </div>

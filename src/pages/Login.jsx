@@ -150,15 +150,6 @@ export default function Login() {
                         </button>
                     </form>
 
-                    {/* Demo credentials */}
-                    <div className="mt-8 rounded-lg border border-slate-200 bg-slate-50 p-4">
-                        <p className="mb-2 text-xs font-semibold uppercase tracking-wider text-slate-500">Demo Credentials</p>
-                        <div className="space-y-1.5 text-xs text-slate-600">
-                            <p><span className="font-medium">Admin:</span> admin@payrollpro.com / admin123</p>
-                            <p><span className="font-medium">HR:</span> hr@payrollpro.com / hr123</p>
-                            <p><span className="font-medium">Employee:</span> sarah.johnson@company.com / emp123</p>
-                        </div>
-                    </div>
                 </div>
             </div>
         </div>

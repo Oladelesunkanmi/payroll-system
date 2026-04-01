@@ -1,0 +1,28 @@
+# Binaries
+bin/
+# If the root has an executable name like 'main' or 'api'
+api
+main
+
+# Environment
+.env
+
+# Dependencies
+vendor/
+node_modules/
+
+# OS
+.DS_Store
+*.exe
+
+# Debug
+gocode/
+debug/
+*.test
+*.prof
+
+# IDE
+.vscode/
+.idea/
+*.swp
+*.swo

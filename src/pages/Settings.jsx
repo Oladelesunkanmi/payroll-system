@@ -8,14 +8,14 @@ export default function Settings() {
     const [profile, setProfile] = useState({
         name: user?.name || '',
         email: user?.email || '',
-        phone: '+1 (555) 123-4567',
-        address: '123 Business Ave, Suite 100',
+        phone: '',
+        address: '',
     });
     const [company, setCompany] = useState({
-        name: 'PayrollPro Inc.',
-        industry: 'Technology',
-        size: '50-200',
-        address: '456 Corporate Blvd, Floor 10',
+        name: '',
+        industry: '',
+        size: '',
+        address: '',
     });
 
     const handleSave = (e) => {

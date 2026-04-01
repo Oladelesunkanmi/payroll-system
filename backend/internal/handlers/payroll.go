@@ -11,6 +11,101 @@ import (
 	"github.com/gofiber/fiber/v2"
 )
 
+// CalculateNigerianPIT calculates the monthly tax based on the Finance Act 2020 (P.A.Y.E.)
+func CalculateNigerianPIT(monthlyGross float64) float64 {
+	annualGross := monthlyGross * 12
+	if annualGross <= 0 {
+		return 0
+	}
+
+	// 1. Statutory Deductions (Standard 50-30-20 split assumed)
+	basic := annualGross * 0.50
+	housing := annualGross * 0.30
+	transport := annualGross * 0.20
+
+	pension := (basic + housing + transport) * 0.08
+	nhf := basic * 0.025
+	// Total Statutory Deductions
+	totalDeductions := pension + nhf
+
+	// 2. Consolidated Relief Allowance (CRA)
+	// Max(200k, 1% of Gross) + 20% of Gross
+	reliefBase := 200000.0
+	if 0.01*annualGross > reliefBase {
+		reliefBase = 0.01 * annualGross
+	}
+	cra := reliefBase + (0.20 * annualGross)
+
+	// 3. Taxable Income
+	taxableIncome := annualGross - cra - totalDeductions
+	if taxableIncome <= 0 {
+		// Minimum Tax: 1% of Gross Income if taxable income is zero or negative
+		return (annualGross * 0.01) / 12
+	}
+
+	// 4. Annual PIT Brackets (Finance Act 2020)
+	var annualTax float64
+	remaining := taxableIncome
+
+	// Bracket 1: First 300,000 @ 7%
+	if remaining > 300000 {
+		annualTax += 300000 * 0.07
+		remaining -= 300000
+	} else {
+		annualTax += remaining * 0.07
+		return annualTax / 12
+	}
+
+	// Bracket 2: Next 300,000 @ 11%
+	if remaining > 300000 {
+		annualTax += 300000 * 0.11
+		remaining -= 300000
+	} else {
+		annualTax += remaining * 0.11
+		return annualTax / 12
+	}
+
+	// Bracket 3: Next 500,000 @ 15%
+	if remaining > 500000 {
+		annualTax += 500000 * 0.15
+		remaining -= 500000
+	} else {
+		annualTax += remaining * 0.15
+		return annualTax / 12
+	}
+
+	// Bracket 4: Next 500,000 @ 19%
+	if remaining > 500000 {
+		annualTax += 500000 * 0.19
+		remaining -= 500000
+	} else {
+		annualTax += remaining * 0.19
+		return annualTax / 12
+	}
+
+	// Bracket 5: Next 1,600,000 @ 21%
+	if remaining > 1600000 {
+		annualTax += 1600000 * 0.21
+		remaining -= 1600000
+	} else {
+		annualTax += remaining * 0.21
+		return annualTax / 12
+	}
+
+	// Bracket 6: Above 3,200,000 @ 24%
+	annualTax += remaining * 0.24
+
+	monthlyTax := annualTax / 12
+	
+	// Minimum Tax Check: 1% of Gross
+	minTax := (annualGross * 0.01) / 12
+	if monthlyTax < minTax {
+		return minTax
+	}
+
+	return monthlyTax
+}
+
 // GetAllPayrolls returns a list of all payroll records for the current month
 func GetAllPayrolls(c *fiber.Ctx) error {
 	var employees []models.Employee
@@ -24,13 +119,17 @@ func GetAllPayrolls(c *fiber.Ctx) error {
 		var payroll models.Payroll
 		result := database.DB.Where("employee_id = ? AND period_start >= ? AND period_start <= ?", emp.ID, monthStart, monthEnd).First(&payroll)
 		if result.Error != nil {
+			// Calculate official Nigerian PIT
+			tax := CalculateNigerianPIT(emp.Salary)
+			
 			// Create pending payroll for this month
 			newPayroll := models.Payroll{
 				EmployeeID:    emp.ID,
 				BasicSalary:   emp.Salary,
 				Allowances:    0,
 				Deductions:    0,
-				NetSalary:     emp.Salary,
+				Tax:           tax,
+				NetSalary:     emp.Salary - tax,
 				PaymentStatus: "Pending",
 				PeriodStart:   monthStart,
 				PeriodEnd:     monthEnd,
@@ -64,7 +163,7 @@ func CreatePayroll(c *fiber.Ctx) error {
 
 	// Calculate Net Salary if not provided
 	if payroll.NetSalary == 0 {
-		payroll.NetSalary = payroll.BasicSalary + payroll.Allowances - payroll.Deductions
+		payroll.NetSalary = payroll.BasicSalary + payroll.Allowances - payroll.Deductions - payroll.Tax
 	}
 
 	database.DB.Create(&payroll)
@@ -86,7 +185,7 @@ func UpdatePayroll(c *fiber.Ctx) error {
 	}
 
 	// Recalculate Net Salary
-	payroll.NetSalary = payroll.BasicSalary + payroll.Allowances - payroll.Deductions
+	payroll.NetSalary = payroll.BasicSalary + payroll.Allowances - payroll.Deductions - payroll.Tax
 
 	database.DB.Save(&payroll)
 	database.DB.Preload("Employee").First(&payroll, payroll.ID)

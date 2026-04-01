@@ -14,5 +14,5 @@ func main() {
 	}
 	defer resp.Body.Close()
 	body, _ := io.ReadAll(resp.Body)
-	fmt.Printf("Status: %d\nBody: %s\n", resp.StatusCode)
+	fmt.Printf("Status: %d\nBody: %s\n", resp.StatusCode, body)
 }

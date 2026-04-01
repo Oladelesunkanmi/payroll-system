@@ -33,7 +33,7 @@ export default function Payslips() {
     }, [user]);
 
     const handleDownload = (slip) => {
-        const text = `PAYSLIP - ${new Date(slip.period_start).toLocaleDateString()}\n\nBasic Salary: ₦${slip.basic_salary.toFixed(2)}\nAllowances: ₦${slip.allowances.toFixed(2)}\nDeductions: ₦${slip.deductions.toFixed(2)}\nNet Salary: ₦${slip.net_salary.toFixed(2)}\n\nStatus: ${slip.payment_status}`;
+        const text = `PAYSLIP - ${new Date(slip.period_start).toLocaleDateString()}\n\nBasic Salary: ₦${slip.basic_salary.toFixed(2)}\nAllowances: ₦${slip.allowances.toFixed(2)}\nDeductions: ₦${slip.deductions.toFixed(2)}\nTax: ₦${slip.tax.toFixed(2)}\nNet Salary: ₦${slip.net_salary.toFixed(2)}\n\nStatus: ${slip.payment_status}`;
         const blob = new Blob([text], { type: 'text/plain' });
         const url = URL.createObjectURL(blob);
         const a = document.createElement('a');
@@ -95,9 +95,15 @@ export default function Payslips() {
                             {/* Deductions */}
                             <div className="rounded-lg border border-slate-100 bg-slate-50 p-4">
                                 <h4 className="mb-3 text-sm font-semibold text-slate-700">Deductions</h4>
-                                <div className="flex justify-between text-sm">
-                                    <span className="text-slate-600">Total Deductions</span>
-                                    <span className="font-medium text-red-500">-₦{selected.deductions.toFixed(2)}</span>
+                                <div className="space-y-2">
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-slate-600">Company Deductions</span>
+                                        <span className="font-medium text-red-500">-₦{selected.deductions.toFixed(2)}</span>
+                                    </div>
+                                    <div className="flex justify-between text-sm">
+                                        <span className="text-slate-600">Tax</span>
+                                        <span className="font-medium text-red-500">-₦{selected.tax.toFixed(2)}</span>
+                                    </div>
                                 </div>
                             </div>
 
@@ -141,6 +147,7 @@ export default function Payslips() {
                                     <div className="animate-scale-in mt-1 rounded-lg bg-slate-50 p-3 text-xs text-slate-600 space-y-1">
                                         <p>Basic: ₦{slip.basic_salary.toFixed(2)}</p>
                                         <p>Allowances: +₦{slip.allowances.toFixed(2)}</p>
+                                        <p>Tax: -₦{slip.tax.toFixed(2)}</p>
                                         <p>Deductions: -₦{slip.deductions.toFixed(2)}</p>
                                         <button onClick={() => handleDownload(slip)} className="mt-2 text-primary-600 hover:underline flex items-center gap-1">
                                             <Download className="h-3 w-3" /> Download

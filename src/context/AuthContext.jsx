@@ -5,8 +5,10 @@ const AuthContext = createContext(null);
 
 export function AuthProvider({ children }) {
     const [user, setUser] = useState(() => {
-        const stored = localStorage.getItem('payroll_user');
-        return stored ? JSON.parse(stored) : null;
+        const storedUser = localStorage.getItem('payroll_user');
+        const token = localStorage.getItem('payroll_token');
+        // Both must exist to be considered logged in
+        return (storedUser && token) ? JSON.parse(storedUser) : null;
     });
 
     useEffect(() => {

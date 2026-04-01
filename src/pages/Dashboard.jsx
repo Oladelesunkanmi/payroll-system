@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { api } from '../services/api';
+import { useAuth } from '../context/AuthContext';
 import { 
     Users, Banknote, CircleDollarSign, ClipboardList, TrendingUp, TrendingDown,
     UserPlus, Edit2, UserMinus, CreditCard, LogIn, Activity
@@ -19,6 +20,7 @@ import {
 ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Title, Tooltip, Legend);
 
 export default function Dashboard() {
+    const { user } = useAuth();
     const [statsData, setStatsData] = useState(null);
     const [chartsData, setChartsData] = useState(null);
     const [activities, setActivities] = useState([]);
@@ -26,6 +28,10 @@ export default function Dashboard() {
 
     useEffect(() => {
         const fetchDashboardData = async () => {
+            if (!user || (user.role !== 'admin' && user.role !== 'hr')) {
+                setLoading(false);
+                return;
+            }
             setLoading(true);
             try {
                 const [stats, reports, recentActivities] = await Promise.all([
@@ -193,8 +199,30 @@ export default function Dashboard() {
         return `${Math.floor(diffInSeconds / 86400)}d ago`;
     };
 
+    if (user.role !== 'admin' && user.role !== 'hr') {
+        return (
+            <div className="flex min-h-[60vh] flex-col items-center justify-center gap-6 px-4 text-center animate-fade-in">
+                <div className="flex h-20 w-20 items-center justify-center rounded-3xl bg-primary-50 text-primary-600 shadow-xl shadow-primary-500/10">
+                    <CircleDollarSign className="h-10 w-10" />
+                </div>
+                <div className="max-w-md space-y-2">
+                    <h2 className="text-2xl font-bold tracking-tight text-slate-800">Welcome back, {user.name}!</h2>
+                    <p className="text-slate-500">Your employee dashboard is being personalized. For now, you can view your monthly earnings and download payslips.</p>
+                </div>
+                <div className="flex flex-wrap justify-center gap-4">
+                    <button 
+                        onClick={() => window.location.href = '/payslips'}
+                        className="rounded-xl bg-primary-600 px-8 py-3 font-semibold text-white shadow-lg shadow-primary-500/25 transition-all hover:bg-primary-700 hover:shadow-primary-500/40 active:scale-95"
+                    >
+                        View My Payslips
+                    </button>
+                </div>
+            </div>
+        );
+    }
+
     return (
-        <div className="space-y-6">
+        <div className="space-y-6 animate-fade-in">
             {/* Stats cards */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
                 {stats.map((stat, i) => {

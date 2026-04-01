@@ -15,6 +15,7 @@ type Payroll struct {
 	BasicSalary   float64        `gorm:"type:decimal(10,2)" json:"basic_salary"`
 	Allowances    float64        `gorm:"type:decimal(10,2)" json:"allowances"`
 	Deductions    float64        `gorm:"type:decimal(10,2)" json:"deductions"`
+	Tax           float64        `gorm:"type:decimal(10,2)" json:"tax"`
 	NetSalary     float64        `gorm:"type:decimal(10,2)" json:"net_salary"`
 	PaymentStatus string         `gorm:"size:50;default:'pending'" json:"payment_status"`
 	CreatedAt     time.Time      `json:"created_at"`
