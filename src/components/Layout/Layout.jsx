@@ -7,7 +7,7 @@ export default function Layout() {
     const [sidebarOpen, setSidebarOpen] = useState(true);
 
     return (
-        <div className="flex h-screen overflow-hidden bg-slate-50">
+        <div className="flex h-screen overflow-hidden bg-slate-50 dark:bg-dark-bg transition-colors duration-300">
             {/* Mobile overlay */}
             {sidebarOpen && (
                 <div
@@ -30,7 +30,7 @@ export default function Layout() {
             {/* Main content area */}
             <div className="flex flex-1 flex-col overflow-hidden">
                 <Navbar onMenuClick={() => setSidebarOpen(!sidebarOpen)} />
-                <main className="relative z-40 flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
+                <main className="relative z-10 flex-1 overflow-y-auto p-4 md:p-6 lg:p-8">
                     <Outlet />
                 </main>
             </div>

@@ -15,10 +15,29 @@ const apiRequest = async (endpoint, method = 'GET', body = null) => {
     }
 
     const response = await fetch(`${BASE_URL}${endpoint}`, options);
-    
     if (!response.ok) {
-        const error = await response.json();
-        throw new Error(error.message || 'Something went wrong');
+        let message = 'Something went wrong';
+
+        try {
+            const error = await response.json();
+            message = error.message || message;
+        } catch {
+            // ignore JSON parse errors
+        }
+
+        if (response.status === 401) {
+            if (
+                message === 'Invalid or expired token' ||
+                message === 'Missing authorization header' ||
+                message === 'Invalid authorization header format'
+            ) {
+                localStorage.removeItem('payroll_token');
+                localStorage.removeItem('payroll_user');
+                window.location.href = '/login';
+            }
+        }
+
+        throw new Error(message);
     }
 
     if (response.status === 204) {
@@ -58,6 +77,9 @@ export const api = {
     getDashboardStats: () => apiRequest('/api/stats/dashboard'),
     getReportsData: () => apiRequest('/api/stats/reports'),
     getRecentActivity: () => apiRequest('/api/stats/activity'),
+    getNotifications: () => apiRequest('/api/notifications'),
+    markNotificationRead: (id) => apiRequest(`/api/notifications/read/${id}`, 'POST'),
+    markAllNotificationsRead: () => apiRequest('/api/notifications/read-all', 'POST'),
     getMyPayrolls: (employeeId) => apiRequest(`/api/payrolls/employee/${employeeId}`),
     processBulkTransfer: () => apiRequest('/api/payrolls/bulk-transfer', 'POST'),
 };

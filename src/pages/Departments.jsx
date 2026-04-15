@@ -79,8 +79,8 @@ export default function Departments() {
         <div className="space-y-5 animate-fade-in">
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <h2 className="text-xl font-bold text-slate-800">Department Management</h2>
-                    <p className="text-sm text-slate-500">{filtered.length} departments total</p>
+                    <h2 className="text-xl font-bold text-slate-800 dark:text-white">Department Management</h2>
+                    <p className="text-sm text-slate-500 dark:text-slate-400">{filtered.length} departments total</p>
                 </div>
                 <button
                     onClick={openAdd}
@@ -93,59 +93,59 @@ export default function Departments() {
 
             <div className="flex flex-col gap-3 sm:flex-row">
                 <div className="relative flex-1">
-                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                    <Search className="pointer-events-none absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
                     <input
                         type="text"
                         value={search}
                         onChange={(e) => { setSearch(e.target.value); setPage(1); }}
                         placeholder="Search departments..."
-                        className="h-10 w-full rounded-lg border border-slate-200 bg-white pl-10 pr-4 text-sm text-slate-700 placeholder-slate-400 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 focus:outline-none"
+                        className="h-10 w-full rounded-lg border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-card pl-11 pr-4 text-sm text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:border-primary-400 focus:ring-2 focus:ring-primary-100 dark:focus:ring-primary-900/30 focus:outline-none"
                     />
                 </div>
             </div>
 
-            <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+            <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-surface shadow-sm">
                 <div className="overflow-x-auto">
                     <table className="w-full min-w-[600px] text-left text-sm">
                         <thead>
-                            <tr className="border-b border-slate-100 bg-slate-50">
-                                <th className="whitespace-nowrap px-6 py-3 font-semibold text-slate-600">ID</th>
-                                <th className="whitespace-nowrap px-6 py-3 font-semibold text-slate-600">Department Name</th>
-                                <th className="whitespace-nowrap px-6 py-3 font-semibold text-slate-600">Created At</th>
-                                <th className="whitespace-nowrap px-6 py-3 font-semibold text-slate-600 text-right">Actions</th>
+                            <tr className="border-b border-slate-100 dark:border-dark-border bg-slate-50 dark:bg-dark-card">
+                                <th className="whitespace-nowrap px-6 py-3 font-semibold text-slate-600 dark:text-slate-300">ID</th>
+                                <th className="whitespace-nowrap px-6 py-3 font-semibold text-slate-600 dark:text-slate-300">Department Name</th>
+                                <th className="whitespace-nowrap px-6 py-3 font-semibold text-slate-600 dark:text-slate-300">Created At</th>
+                                <th className="whitespace-nowrap px-6 py-3 font-semibold text-slate-600 dark:text-slate-300 text-right">Actions</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100">
+                        <tbody className="divide-y divide-slate-100 dark:divide-dark-border">
                             {loading ? (
                                 <tr>
-                                    <td colSpan={4} className="py-12 text-center text-slate-400">Loading departments...</td>
+                                    <td colSpan={4} className="py-12 text-center text-slate-400 dark:text-slate-500">Loading departments...</td>
                                 </tr>
                             ) : paginated.map((dept) => (
-                                <tr key={dept.id} className="transition-colors hover:bg-slate-50/70">
-                                    <td className="whitespace-nowrap px-6 py-4 font-mono text-xs text-slate-500">{dept.id}</td>
+                                <tr key={dept.id} className="transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/50">
+                                    <td className="whitespace-nowrap px-6 py-4 font-mono text-xs text-slate-500 dark:text-slate-400">{dept.id}</td>
                                     <td className="whitespace-nowrap px-6 py-4">
                                         <div className="flex items-center gap-3">
-                                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-50 text-indigo-600">
+                                            <div className="flex h-8 w-8 shrink-0 items-center justify-center rounded-lg bg-indigo-50 dark:bg-indigo-900/30 text-indigo-600 dark:text-indigo-400">
                                                 <Building2 className="h-4 w-4" />
                                             </div>
-                                            <span className="font-medium text-slate-800">{dept.name}</span>
+                                            <span className="font-medium text-slate-800 dark:text-slate-200">{dept.name}</span>
                                         </div>
                                     </td>
-                                    <td className="whitespace-nowrap px-6 py-4 text-slate-500">
+                                    <td className="whitespace-nowrap px-6 py-4 text-slate-500 dark:text-slate-400">
                                         {dept.created_at ? new Date(dept.created_at).toLocaleDateString() : 'N/A'}
                                     </td>
                                     <td className="whitespace-nowrap px-6 py-4 text-right">
                                         <div className="flex items-center justify-end gap-1">
                                             <button
                                                 onClick={() => openEdit(dept)}
-                                                className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-blue-50 hover:text-blue-600"
+                                                className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-blue-50 dark:hover:bg-blue-900/20 hover:text-blue-600 dark:hover:text-blue-400"
                                                 title="Edit"
                                             >
                                                 <Edit3 className="h-4 w-4" />
                                             </button>
                                             <button
                                                 onClick={() => handleDelete(dept.id)}
-                                                className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-red-50 hover:text-red-600"
+                                                className="rounded-lg p-1.5 text-slate-400 transition-colors hover:bg-red-50 dark:hover:bg-red-900/20 hover:text-red-600 dark:hover:text-red-400"
                                                 title="Delete"
                                             >
                                                 <Trash2 className="h-4 w-4" />
@@ -156,7 +156,7 @@ export default function Departments() {
                             ))}
                             {!loading && paginated.length === 0 && (
                                 <tr>
-                                    <td colSpan={4} className="py-12 text-center text-sm text-slate-400">
+                                    <td colSpan={4} className="py-12 text-center text-sm text-slate-400 dark:text-slate-500">
                                         No departments found.
                                     </td>
                                 </tr>
@@ -166,15 +166,15 @@ export default function Departments() {
                 </div>
 
                 {totalPages > 1 && (
-                    <div className="flex items-center justify-between border-t border-slate-100 px-6 py-3">
-                        <p className="text-xs text-slate-500">
+                    <div className="flex items-center justify-between border-t border-slate-100 dark:border-dark-border px-6 py-3">
+                        <p className="text-xs text-slate-500 dark:text-slate-400">
                             Showing {(page - 1) * perPage + 1}–{Math.min(page * perPage, filtered.length)} of {filtered.length}
                         </p>
                         <div className="flex items-center gap-1">
                             <button
                                 onClick={() => setPage((p) => Math.max(1, p - 1))}
                                 disabled={page === 1}
-                                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 disabled:opacity-40"
+                                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40"
                             >
                                 <ChevronLeft className="h-4 w-4" />
                             </button>
@@ -184,7 +184,7 @@ export default function Departments() {
                                     onClick={() => setPage(i + 1)}
                                     className={`h-8 w-8 rounded-lg text-xs font-medium transition-colors ${page === i + 1
                                         ? 'bg-primary-600 text-white'
-                                        : 'text-slate-600 hover:bg-slate-100'
+                                        : 'text-slate-600 dark:text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800'
                                         }`}
                                 >
                                     {i + 1}
@@ -193,7 +193,7 @@ export default function Departments() {
                             <button
                                 onClick={() => setPage((p) => Math.min(totalPages, p + 1))}
                                 disabled={page === totalPages}
-                                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 disabled:opacity-40"
+                                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 disabled:opacity-40"
                             >
                                 <ChevronRight className="h-4 w-4" />
                             </button>
@@ -204,35 +204,35 @@ export default function Departments() {
 
             {modalOpen && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4">
-                    <div className="animate-scale-in w-full max-w-md rounded-2xl bg-white p-6 shadow-2xl">
+                    <div className="animate-scale-in w-full max-w-md rounded-2xl bg-white dark:bg-dark-surface p-6 shadow-2xl dark:shadow-black/50">
                         <div className="mb-5 flex items-center justify-between">
-                            <h3 className="text-lg font-bold text-slate-800">
+                            <h3 className="text-lg font-bold text-slate-800 dark:text-white">
                                 {editingId ? 'Edit Department' : 'Add New Department'}
                             </h3>
                             <button
                                 onClick={() => setModalOpen(false)}
-                                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 hover:text-slate-600"
+                                className="rounded-lg p-1.5 text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-200"
                             >
                                 <X className="h-5 w-5" />
                             </button>
                         </div>
                         <form onSubmit={handleSave} className="space-y-4">
                             <div>
-                                <label className="mb-1.5 block text-sm font-medium text-slate-700">Department Name</label>
+                                <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">Department Name</label>
                                 <input
                                     required
                                     autoFocus
                                     value={form.name}
                                     onChange={(e) => setForm({ ...form, name: e.target.value })}
                                     placeholder="e.g. Engineering, Marketing..."
-                                    className="h-11 w-full rounded-lg border border-slate-200 bg-white px-4 text-sm text-slate-700 focus:border-primary-400 focus:ring-4 focus:ring-primary-100 focus:outline-none"
+                                    className="h-11 w-full rounded-lg border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-card px-4 text-sm text-slate-700 dark:text-slate-200 focus:border-primary-400 focus:ring-4 focus:ring-primary-100 dark:focus:ring-primary-900/30 focus:outline-none"
                                 />
                             </div>
                             <div className="flex justify-end gap-3 pt-4">
                                 <button
                                     type="button"
                                     onClick={() => setModalOpen(false)}
-                                    className="rounded-lg border border-slate-200 px-4 py-2.5 text-sm font-medium text-slate-700 hover:bg-slate-50"
+                                    className="rounded-lg border border-slate-200 dark:border-dark-border px-4 py-2.5 text-sm font-medium text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-800"
                                 >
                                     Cancel
                                 </button>

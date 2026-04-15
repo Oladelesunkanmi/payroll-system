@@ -1,6 +1,9 @@
 package handlers
 
 import (
+	"strconv"
+	"time"
+
 	"github.com/Oladelesunkanmi/payroll-system/backend/internal/models"
 	"github.com/Oladelesunkanmi/payroll-system/backend/pkg/database"
 	"github.com/gofiber/fiber/v2"
@@ -11,21 +14,67 @@ func GetDashboardStats(c *fiber.Ctx) error {
 	var totalDepartments int64
 	var processedPayrolls int64
 	var pendingPayrolls int64
+	var calculatedPayrolls int64
 	var totalSalaryPaid float64
+	var totalSalaryBudget float64
+	var newEmployeesThisMonth int64
+	var lastMonthSalaryPaid float64
 
 	database.DB.Model(&models.Employee{}).Count(&totalEmployees)
 	database.DB.Model(&models.Department{}).Count(&totalDepartments)
 	database.DB.Model(&models.Payroll{}).Where("payment_status = ?", "Processed").Count(&processedPayrolls)
 	database.DB.Model(&models.Payroll{}).Where("payment_status = ?", "Pending").Count(&pendingPayrolls)
+	database.DB.Model(&models.Payroll{}).Where("payment_status = ?", "Calculated").Count(&calculatedPayrolls)
 
-	database.DB.Model(&models.Payroll{}).Where("payment_status = ?", "Processed").Select("SUM(net_salary)").Row().Scan(&totalSalaryPaid)
+	// Total salary paid (all payrolls regardless of status - represents total disbursed/scheduled)
+	database.DB.Model(&models.Payroll{}).
+		Select("COALESCE(SUM(net_salary), 0)").
+		Row().Scan(&totalSalaryPaid)
+
+	// Monthly salary budget from employee table (sum of all current base salaries)
+	database.DB.Model(&models.Employee{}).
+		Select("COALESCE(SUM(salary), 0)").
+		Row().Scan(&totalSalaryBudget)
+
+	// Employees hired this month
+	now := time.Now()
+	monthStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+	database.DB.Model(&models.Employee{}).
+		Where("date_hired >= ?", monthStart).
+		Count(&newEmployeesThisMonth)
+
+	// Last month's payroll total for comparison
+	lastMonthStart := monthStart.AddDate(0, -1, 0)
+	database.DB.Model(&models.Payroll{}).
+		Where("period_start >= ? AND period_start < ?", lastMonthStart, monthStart).
+		Select("COALESCE(SUM(net_salary), 0)").
+		Row().Scan(&lastMonthSalaryPaid)
+
+	// This month's payroll total
+	var thisMonthSalaryPaid float64
+	database.DB.Model(&models.Payroll{}).
+		Where("period_start >= ?", monthStart).
+		Select("COALESCE(SUM(net_salary), 0)").
+		Row().Scan(&thisMonthSalaryPaid)
+
+	// Calculate month-over-month percentage change
+	var salaryChangePercent float64
+	if lastMonthSalaryPaid > 0 {
+		salaryChangePercent = ((thisMonthSalaryPaid - lastMonthSalaryPaid) / lastMonthSalaryPaid) * 100
+	}
 
 	return c.JSON(fiber.Map{
-		"total_employees":    totalEmployees,
-		"total_departments":  totalDepartments,
-		"processed_payrolls": processedPayrolls,
-		"pending_payrolls":   pendingPayrolls,
-		"total_salary_paid":  totalSalaryPaid,
+		"total_employees":        totalEmployees,
+		"total_departments":      totalDepartments,
+		"processed_payrolls":     processedPayrolls,
+		"pending_payrolls":       pendingPayrolls,
+		"calculated_payrolls":    calculatedPayrolls,
+		"total_salary_paid":      totalSalaryPaid,
+		"total_salary_budget":    totalSalaryBudget,
+		"this_month_salary":      thisMonthSalaryPaid,
+		"last_month_salary":      lastMonthSalaryPaid,
+		"salary_change_percent":  salaryChangePercent,
+		"new_employees_month":    newEmployeesThisMonth,
 	})
 }
 
@@ -35,6 +84,41 @@ func GetRecentActivity(c *fiber.Ctx) error {
 	return c.JSON(activities)
 }
 
+func GetNotifications(c *fiber.Ctx) error {
+	var activities []models.Activity
+	database.DB.Preload("User").Order("created_at desc").Limit(10).Find(&activities)
+	return c.JSON(activities)
+}
+
+func MarkNotificationRead(c *fiber.Ctx) error {
+	idParam := c.Params("id")
+	id, err := strconv.ParseUint(idParam, 10, 64)
+	if err != nil {
+		return c.Status(400).JSON(fiber.Map{"message": "Invalid notification ID"})
+	}
+
+	var activity models.Activity
+	if err := database.DB.First(&activity, uint(id)).Error; err != nil {
+		return c.Status(404).JSON(fiber.Map{"message": "Notification not found"})
+	}
+
+	activity.Read = true
+	if err := database.DB.Save(&activity).Error; err != nil {
+		return c.Status(500).JSON(fiber.Map{"message": "Could not mark notification as read"})
+	}
+
+	return c.JSON(activity)
+}
+
+func MarkNotificationsRead(c *fiber.Ctx) error {
+	result := database.DB.Model(&models.Activity{}).Where("read = ?", false).Update("read", true)
+	if result.Error != nil {
+		return c.Status(500).JSON(fiber.Map{"message": "Could not mark notifications as read"})
+	}
+
+	return c.JSON(fiber.Map{"updated": result.RowsAffected})
+}
+
 func GetReportsData(c *fiber.Ctx) error {
 	// Monthly Payroll Totals (Last 6 months)
 	type MonthlyTotal struct {
@@ -42,7 +126,6 @@ func GetReportsData(c *fiber.Ctx) error {
 		Total float64 `json:"total"`
 	}
 	var monthlyTotals []MonthlyTotal
-	// This is a simplified version; real app might need more complex grouping
 	database.DB.Model(&models.Payroll{}).
 		Select("to_char(period_start, 'Mon YYYY') as month, SUM(net_salary) as total").
 		Group("month").
@@ -52,8 +135,8 @@ func GetReportsData(c *fiber.Ctx) error {
 
 	// Department Distribution
 	type DeptDist struct {
-		Name  string `json:"name"`
-		Count int64  `json:"count"`
+		Name        string  `json:"name"`
+		Count       int64   `json:"count"`
 		TotalSalary float64 `json:"total_salary"`
 	}
 	var deptDists []DeptDist
@@ -64,7 +147,7 @@ func GetReportsData(c *fiber.Ctx) error {
 		Scan(&deptDists)
 
 	return c.JSON(fiber.Map{
-		"monthly_totals": monthlyTotals,
+		"monthly_totals":          monthlyTotals,
 		"department_distribution": deptDists,
 	})
 }

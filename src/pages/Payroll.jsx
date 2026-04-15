@@ -31,7 +31,6 @@ export default function Payroll() {
         const annualGross = monthlyGross * 12;
         if (annualGross <= 0) return 0;
 
-        // 1. Statutory Deductions (Standard 50-30-20 split)
         const basic = annualGross * 0.50;
         const housing = annualGross * 0.30;
         const transport = annualGross * 0.20;
@@ -40,16 +39,13 @@ export default function Payroll() {
         const nhf = basic * 0.025;
         const totalDeductions = pension + nhf;
 
-        // 2. Consolidated Relief Allowance (CRA)
         let reliefBase = 200000;
         if (0.01 * annualGross > reliefBase) reliefBase = 0.01 * annualGross;
         const cra = reliefBase + (0.20 * annualGross);
 
-        // 3. Taxable Income
         const taxableIncome = annualGross - cra - totalDeductions;
         if (taxableIncome <= 0) return Number(((annualGross * 0.01) / 12).toFixed(2));
 
-        // 4. Annual PIT Brackets
         let annualTax = 0;
         let remaining = taxableIncome;
 
@@ -86,7 +82,6 @@ export default function Payroll() {
                 net_salary: Number(calcNet(rec)),
                 payment_status: 'Calculated'
             });
-            // Quiet save - only indicate in UI, no noisy toast every time
         } catch (error) {
             toast.error('Auto-save failed: ' + error.message);
         } finally {
@@ -101,20 +96,17 @@ export default function Payroll() {
                     const numVal = Number(value) || 0;
                     let updated = { ...r, [field]: numVal };
 
-                    // Auto-recalculate tax using official Nigerian law
                     if (field === 'basic_salary' || field === 'allowances') {
                         const newGross = (field === 'basic_salary' ? numVal : r.basic_salary) + (field === 'allowances' ? numVal : r.allowances);
                         updated.tax = calculateNigerianPIT(newGross);
                     }
 
-                    // Recalculate net salary live
                     const final = { ...updated, net_salary: Number(calcNet(updated)) };
 
-                    // Debounced Auto-Save
                     if (saveTimeoutRef.current) clearTimeout(saveTimeoutRef.current);
                     saveTimeoutRef.current = setTimeout(() => {
                         saveRecord(final);
-                    }, 8000); // 800ms debounce
+                    }, 8000);
 
                     return final;
                 }
@@ -177,9 +169,9 @@ export default function Payroll() {
 
     const badge = (status) => {
         const m = {
-            Processed: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20',
-            Calculated: 'bg-blue-50 text-blue-700 ring-blue-600/20',
-            Pending: 'bg-amber-50 text-amber-700 ring-amber-600/20',
+            Processed: 'bg-emerald-50 text-emerald-700 ring-emerald-600/20 dark:bg-emerald-900/30 dark:text-emerald-400 dark:ring-emerald-500/30',
+            Calculated: 'bg-blue-50 text-blue-700 ring-blue-600/20 dark:bg-blue-900/30 dark:text-blue-400 dark:ring-blue-500/30',
+            Pending: 'bg-amber-50 text-amber-700 ring-amber-600/20 dark:bg-amber-900/30 dark:text-amber-400 dark:ring-amber-500/30',
         };
         return `inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${m[status] || m.Pending}`;
     };
@@ -189,9 +181,9 @@ export default function Payroll() {
             {/* Header */}
             <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <h2 className="text-xl font-bold text-slate-800">Payroll Processing</h2>
+                    <h2 className="text-xl font-bold text-slate-800 dark:text-white">Payroll Processing</h2>
                     <div className="flex items-center gap-2">
-                        <p className="text-sm text-slate-500">March 2026 — {records.length} employees</p>
+                        <p className="text-sm text-slate-500 dark:text-slate-400">March 2026 — {records.length} employees</p>
                         {saving && (
                             <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-primary-500 animate-pulse">
                                 <Clock className="h-3 w-3" /> Auto-Saving
@@ -200,7 +192,7 @@ export default function Payroll() {
                     </div>
                 </div>
                 <div className="flex gap-3">
-                    <button onClick={handleGenerate} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 bg-white px-4 py-2.5 text-sm font-semibold text-slate-700 hover:bg-slate-50">
+                    <button onClick={handleGenerate} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-card px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">
                         <Calculator className="h-4 w-4 shrink-0" />
                         <span>Generate Monthly List</span>
                     </button>
@@ -221,63 +213,62 @@ export default function Payroll() {
 
             {/* Success message */}
             {msg && (
-                <div className="animate-scale-in flex items-center gap-3 rounded-lg border border-emerald-200 bg-emerald-50 px-4 py-3 text-sm text-emerald-700">
+                <div className="animate-scale-in flex items-center gap-3 rounded-lg border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/30 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-400">
                     <CheckCircle2 className="h-4 w-4 shrink-0" /> {msg}
                 </div>
             )}
 
             {/* Summary cards */}
             <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <div className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-100">
-                        <DollarSign className="h-5 w-5 text-violet-600" />
+                <div className="flex items-center gap-4 rounded-xl border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-surface p-4 shadow-sm">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-100 dark:bg-violet-900/30">
+                        <DollarSign className="h-5 w-5 text-violet-600 dark:text-violet-400" />
                     </div>
                     <div className="min-w-0">
-                        <p className="text-xs font-medium text-slate-500">Total Net Payroll</p>
-                        <p className="truncate text-lg font-bold text-slate-800">
+                        <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Total Net Payroll</p>
+                        <p className="truncate text-lg font-bold text-slate-800 dark:text-white">
                             ₦{totalNet.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                         </p>
                     </div>
                 </div>
-                <div className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-100">
-                        <CheckCircle2 className="h-5 w-5 text-emerald-600" />
+                <div className="flex items-center gap-4 rounded-xl border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-surface p-4 shadow-sm">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
+                        <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
                     </div>
                     <div>
-                        <p className="text-xs font-medium text-slate-500">Processed</p>
-                        <p className="text-lg font-bold text-slate-800">{processed} / {records.length}</p>
+                        <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Processed</p>
+                        <p className="text-lg font-bold text-slate-800 dark:text-white">{processed} / {records.length}</p>
                     </div>
                 </div>
-                <div className="flex items-center gap-4 rounded-xl border border-slate-200 bg-white p-4 shadow-sm">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-100">
-                        <Clock className="h-5 w-5 text-amber-600" />
+                <div className="flex items-center gap-4 rounded-xl border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-surface p-4 shadow-sm">
+                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-900/30">
+                        <Clock className="h-5 w-5 text-amber-600 dark:text-amber-400" />
                     </div>
                     <div>
-                        <p className="text-xs font-medium text-slate-500">Pending</p>
-                        <p className="text-lg font-bold text-slate-800">{records.length - processed}</p>
+                        <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Pending</p>
+                        <p className="text-lg font-bold text-slate-800 dark:text-white">{records.length - processed}</p>
                     </div>
                 </div>
             </div>
 
             {/* Payroll table */}
-            <div className="overflow-hidden rounded-xl border border-slate-200 bg-white shadow-sm">
+            <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-surface shadow-sm">
                 <div className="overflow-x-auto">
                     <table className="w-full min-w-[900px] text-left text-sm">
                         <thead>
-                            <tr className="border-b border-slate-100 bg-slate-50">
-                                <th className="whitespace-nowrap px-4 py-3 font-semibold text-slate-600">Employee</th>
-                                <th className="whitespace-nowrap px-4 py-3 font-semibold text-slate-600">Department</th>
-                                <th className="whitespace-nowrap px-4 py-3 font-semibold text-slate-600 text-right">Base Salary</th>
-                                <th className="whitespace-nowrap px-4 py-3 font-semibold text-slate-600 text-right">Bonus</th>
-                                <th className="whitespace-nowrap px-4 py-3 font-semibold text-slate-600 text-right">Deductions</th>
-                                <th className="group relative whitespace-nowrap px-4 py-3 font-semibold text-slate-600 text-right text-red-500">
+                            <tr className="border-b border-slate-100 dark:border-dark-border bg-slate-50 dark:bg-dark-card">
+                                <th className="whitespace-nowrap px-4 py-3 font-semibold text-slate-600 dark:text-slate-300">Employee</th>
+                                <th className="whitespace-nowrap px-4 py-3 font-semibold text-slate-600 dark:text-slate-300">Department</th>
+                                <th className="whitespace-nowrap px-4 py-3 font-semibold text-slate-600 dark:text-slate-300 text-right">Base Salary</th>
+                                <th className="whitespace-nowrap px-4 py-3 font-semibold text-slate-600 dark:text-slate-300 text-right">Bonus</th>
+                                <th className="whitespace-nowrap px-4 py-3 font-semibold text-slate-600 dark:text-slate-300 text-right">Deductions</th>
+                                <th className="group relative whitespace-nowrap px-4 py-3 font-semibold text-slate-600 dark:text-slate-300 text-right text-red-500 dark:text-red-400">
                                     <div className="flex items-center justify-end gap-1.5">
                                         Tax
-                                        <Info className="h-3.5 w-3.5 text-slate-400 cursor-help" />
+                                        <Info className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500 cursor-help" />
                                     </div>
-                                    {/* Tooltip */}
-                                    <div className="invisible absolute right-0 top-full z-50 mt-2 w-64 rounded-xl border border-slate-200 bg-white p-3.5 text-left text-xs font-normal text-slate-600 shadow-xl shadow-slate-200/60 transition-all group-hover:visible">
-                                        <p className="mb-2 font-bold text-slate-800 uppercase tracking-wider">Nigerian PAYE Rules</p>
+                                    <div className="invisible absolute right-0 top-full z-50 mt-2 w-64 rounded-xl border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-card p-3.5 text-left text-xs font-normal text-slate-600 dark:text-slate-300 shadow-xl shadow-slate-200/60 dark:shadow-black/40 transition-all group-hover:visible">
+                                        <p className="mb-2 font-bold text-slate-800 dark:text-white uppercase tracking-wider">Nigerian PAYE Rules</p>
                                         <ul className="space-y-1.5 list-disc pl-3">
                                             <li><span className="font-medium">Consolidated Relief (CRA):</span> Higher of ₦200k or 1% Gross + 20% Gross (Annualized).</li>
                                             <li><span className="font-medium">Pension:</span> 8% of Basic+Housing+Transport</li>
@@ -286,25 +277,25 @@ export default function Payroll() {
                                         </ul>
                                     </div>
                                 </th>
-                                <th className="whitespace-nowrap px-4 py-3 font-semibold text-slate-600 text-right">Net Pay</th>
-                                <th className="whitespace-nowrap px-4 py-3 font-semibold text-slate-600 text-center">Status</th>
-                                <th className="whitespace-nowrap px-4 py-3 font-semibold text-slate-600 text-center">Action</th>
+                                <th className="whitespace-nowrap px-4 py-3 font-semibold text-slate-600 dark:text-slate-300 text-right">Net Pay</th>
+                                <th className="whitespace-nowrap px-4 py-3 font-semibold text-slate-600 dark:text-slate-300 text-center">Status</th>
+                                <th className="whitespace-nowrap px-4 py-3 font-semibold text-slate-600 dark:text-slate-300 text-center">Action</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100">
+                        <tbody className="divide-y divide-slate-100 dark:divide-dark-border">
                             {records.map((rec) => (
-                                <tr key={rec.id} className="transition-colors hover:bg-slate-50/70">
+                                <tr key={rec.id} className="transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/50">
                                     <td className="whitespace-nowrap px-4 py-3.5">
-                                        <p className="font-medium text-slate-800">{rec.employee?.first_name} {rec.employee?.last_name}</p>
-                                        <p className="text-xs text-slate-400">EMP{String(rec.employee_id).padStart(3, '0')}</p>
+                                        <p className="font-medium text-slate-800 dark:text-slate-200">{rec.employee?.first_name} {rec.employee?.last_name}</p>
+                                        <p className="text-xs text-slate-400 dark:text-slate-500">EMP{String(rec.employee_id).padStart(3, '0')}</p>
                                     </td>
-                                    <td className="whitespace-nowrap px-4 py-3.5 text-slate-600">{rec.employee?.department?.name || 'Unassigned'}</td>
+                                    <td className="whitespace-nowrap px-4 py-3.5 text-slate-600 dark:text-slate-300">{rec.employee?.department?.name || 'Unassigned'}</td>
                                     <td className="whitespace-nowrap px-4 py-3.5 text-right">
                                         <input
                                             type="number"
                                             value={rec.basic_salary}
                                             onChange={(e) => handleFieldChange(rec.id, 'basic_salary', e.target.value)}
-                                            className="w-32 rounded border border-slate-200 px-2 py-1 text-right text-sm font-mono text-slate-700 transition-all focus:border-primary-400 focus:ring-4 focus:ring-primary-100 focus:outline-none"
+                                            className="w-32 rounded border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-card px-2 py-1 text-right text-sm font-mono text-slate-700 dark:text-slate-200 transition-all focus:border-primary-400 focus:ring-4 focus:ring-primary-100 dark:focus:ring-primary-900/30 focus:outline-none"
                                         />
                                     </td>
                                     <td className="whitespace-nowrap px-4 py-3.5 text-right">
@@ -312,7 +303,7 @@ export default function Payroll() {
                                             type="number"
                                             value={rec.allowances}
                                             onChange={(e) => handleFieldChange(rec.id, 'allowances', e.target.value)}
-                                            className="w-24 rounded border border-slate-200 px-2 py-1 text-right text-sm text-slate-700 transition-all focus:border-primary-400 focus:ring-4 focus:ring-primary-100 focus:outline-none"
+                                            className="w-24 rounded border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-card px-2 py-1 text-right text-sm text-slate-700 dark:text-slate-200 transition-all focus:border-primary-400 focus:ring-4 focus:ring-primary-100 dark:focus:ring-primary-900/30 focus:outline-none"
                                         />
                                     </td>
                                     <td className="whitespace-nowrap px-4 py-3.5 text-right">
@@ -320,13 +311,13 @@ export default function Payroll() {
                                             type="number"
                                             value={rec.deductions}
                                             onChange={(e) => handleFieldChange(rec.id, 'deductions', e.target.value)}
-                                            className="w-24 rounded border border-slate-200 px-2 py-1 text-right text-sm text-slate-700 transition-all focus:border-primary-400 focus:ring-4 focus:ring-primary-100 focus:outline-none"
+                                            className="w-24 rounded border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-card px-2 py-1 text-right text-sm text-slate-700 dark:text-slate-200 transition-all focus:border-primary-400 focus:ring-4 focus:ring-primary-100 dark:focus:ring-primary-900/30 focus:outline-none"
                                         />
                                     </td>
-                                    <td className="whitespace-nowrap px-4 py-3.5 text-right font-mono text-red-500">
+                                    <td className="whitespace-nowrap px-4 py-3.5 text-right font-mono text-red-500 dark:text-red-400">
                                         ₦{rec.tax?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                     </td>
-                                    <td className="whitespace-nowrap px-4 py-3.5 text-right font-semibold text-slate-800">
+                                    <td className="whitespace-nowrap px-4 py-3.5 text-right font-semibold text-slate-800 dark:text-white">
                                         ₦{Number(rec.net_salary || calcNet(rec)).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                     </td>
                                     <td className="whitespace-nowrap px-4 py-3.5 text-center">
@@ -335,7 +326,7 @@ export default function Payroll() {
                                     <td className="whitespace-nowrap px-4 py-3.5 text-center">
                                         <button
                                             onClick={() => handleCalc(rec)}
-                                            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-primary-600 transition-colors hover:bg-primary-50"
+                                            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-primary-600 dark:text-primary-400 transition-colors hover:bg-primary-50 dark:hover:bg-primary-900/20"
                                         >
                                             <Calculator className="h-3.5 w-3.5" /> Calculate
                                         </button>

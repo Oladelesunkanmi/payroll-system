@@ -1,5 +1,7 @@
 @import "tailwindcss";
 
+@variant dark (&:where(.dark, .dark *));
+
 @theme {
   --font-sans: 'Inter', system-ui, -apple-system, sans-serif;
   --font-display: 'Outfit', 'Inter', system-ui, sans-serif;
@@ -24,6 +26,13 @@
   --color-warning: oklch(0.75 0.18 70);
   --color-danger: oklch(0.60 0.22 25);
   --color-info: oklch(0.60 0.18 240);
+
+  /* Dark mode surface tokens */
+  --color-dark-bg: #0b0f1a;
+  --color-dark-surface: #111827;
+  --color-dark-card: #1e293b;
+  --color-dark-border: #334155;
+  --color-dark-hover: #1e293b;
 }
 
 * {
@@ -35,10 +44,23 @@
 body {
   font-family: var(--font-sans);
   background-color: #f8fafc;
+  background-image:
+    radial-gradient(circle at top left, rgba(99, 102, 241, 0.12), transparent 24%),
+    radial-gradient(circle at bottom right, rgba(56, 189, 248, 0.10), transparent 22%);
   color: #1e293b;
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
   overflow-x: hidden;
+  transition: background-color 0.3s ease, color 0.3s ease;
+}
+
+.dark body,
+:root.dark body {
+  background-color: var(--color-dark-bg);
+  background-image:
+    radial-gradient(circle at top left, rgba(99, 102, 241, 0.08), transparent 24%),
+    radial-gradient(circle at bottom right, rgba(56, 189, 248, 0.06), transparent 22%);
+  color: #e2e8f0;
 }
 
 h1, h2, h3, h4, h5, h6 {
@@ -60,12 +82,24 @@ h1, h2, h3, h4, h5, h6 {
   background: oklch(0.75 0.05 260);
 }
 
+.dark ::-webkit-scrollbar-thumb {
+  background: #334155;
+}
+.dark ::-webkit-scrollbar-thumb:hover {
+  background: #475569;
+}
+
 /* Glassmorphism */
 .glass {
   background: rgba(255, 255, 255, 0.7);
   backdrop-filter: blur(12px);
   -webkit-backdrop-filter: blur(12px);
   border: 1px solid rgba(255, 255, 255, 0.3);
+}
+
+.dark .glass {
+  background: rgba(30, 41, 59, 0.7);
+  border: 1px solid rgba(255, 255, 255, 0.08);
 }
 
 .glass-dark {
@@ -98,6 +132,11 @@ h1, h2, h3, h4, h5, h6 {
   to { opacity: 1; transform: scale(1); }
 }
 
+@keyframes themeRotate {
+  from { transform: rotate(0deg); }
+  to { transform: rotate(360deg); }
+}
+
 .animate-fade-in {
   animation: fadeIn 0.5s cubic-bezier(0.4, 0, 0.2, 1) forwards;
 }
@@ -108,4 +147,67 @@ h1, h2, h3, h4, h5, h6 {
 
 .animate-scale-in {
   animation: scaleIn 0.3s cubic-bezier(0.4, 0, 0.2, 1) forwards;
+}
+
+.animate-theme-rotate {
+  animation: themeRotate 0.5s cubic-bezier(0.4, 0, 0.2, 1);
+}
+
+/* Card component */
+.card {
+  background: rgba(255, 255, 255, 0.92);
+  border: 1px solid rgba(148, 163, 184, 0.16);
+  box-shadow: 0 18px 50px -30px rgba(15, 23, 42, 0.18);
+  border-radius: 0.75rem;
+  transition: transform 0.25s ease, box-shadow 0.25s ease, border-color 0.25s ease, background-color 0.3s ease;
+}
+
+.dark .card {
+  background: rgba(30, 41, 59, 0.8);
+  border: 1px solid rgba(51, 65, 85, 0.6);
+  box-shadow: 0 18px 50px -30px rgba(0, 0, 0, 0.5);
+}
+
+.card:hover,
+.card.card-hover:hover {
+  transform: translateY(-4px);
+  box-shadow: 0 24px 60px -30px rgba(15, 23, 42, 0.23);
+  border-color: rgba(148, 163, 184, 0.26);
+}
+
+.dark .card:hover,
+.dark .card.card-hover:hover {
+  box-shadow: 0 24px 60px -30px rgba(0, 0, 0, 0.6);
+  border-color: rgba(99, 102, 241, 0.3);
+}
+
+/* Notification panel */
+.notification-panel {
+  background: rgba(255, 255, 255, 0.96);
+  backdrop-filter: blur(18px);
+  -webkit-backdrop-filter: blur(18px);
+  border: 1px solid rgba(148, 163, 184, 0.18);
+  box-shadow: 0 30px 90px -45px rgba(15, 23, 42, 0.25);
+}
+
+.dark .notification-panel {
+  background: rgba(17, 24, 39, 0.96);
+  border: 1px solid rgba(51, 65, 85, 0.6);
+  box-shadow: 0 30px 90px -45px rgba(0, 0, 0, 0.6);
+}
+
+.dashboard-empty-state {
+  background: linear-gradient(180deg, rgba(59, 130, 246, 0.06), rgba(255, 255, 255, 0.85));
+  border: 1px solid rgba(148, 163, 184, 0.18);
+}
+
+.dark .dashboard-empty-state {
+  background: linear-gradient(180deg, rgba(59, 130, 246, 0.08), rgba(17, 24, 39, 0.85));
+  border: 1px solid rgba(51, 65, 85, 0.5);
+}
+
+/* Theme transition for all interactive elements */
+.theme-transition,
+.theme-transition * {
+  transition: background-color 0.3s ease, border-color 0.3s ease, color 0.3s ease;
 }

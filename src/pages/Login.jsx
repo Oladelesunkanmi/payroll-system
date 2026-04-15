@@ -65,32 +65,32 @@ export default function Login() {
             </div>
 
             {/* Right login form */}
-            <div className="flex w-full items-center justify-center p-6 lg:w-1/2">
+            <div className="flex w-full items-center justify-center p-6 lg:w-1/2 bg-white dark:bg-dark-bg transition-colors duration-300">
                 <div className="w-full max-w-md animate-fade-in">
                     {/* Mobile logo */}
                     <div className="mb-8 flex items-center gap-3 lg:hidden">
                         <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-primary-600">
                             <CircleDollarSign className="h-6 w-6 text-white" />
                         </div>
-                        <span className="text-xl font-bold text-slate-800">PayrollPro</span>
+                        <span className="text-xl font-bold text-slate-800 dark:text-white">PayrollPro</span>
                     </div>
 
                     <div>
-                        <h2 className="text-2xl font-bold text-slate-800">Welcome back</h2>
-                        <p className="mt-2 text-slate-500">Sign in to your account to continue</p>
+                        <h2 className="text-2xl font-bold text-slate-800 dark:text-white">Welcome back</h2>
+                        <p className="mt-2 text-slate-500 dark:text-slate-400">Sign in to your account to continue</p>
                     </div>
 
                     <form onSubmit={handleSubmit} className="mt-8 space-y-5">
                         {error && (
-                            <div className="animate-scale-in rounded-lg border border-red-200 bg-red-50 px-4 py-3 text-sm text-red-600">
+                            <div className="animate-scale-in rounded-lg border border-red-200 dark:border-red-800 bg-red-50 dark:bg-red-900/30 px-4 py-3 text-sm text-red-600 dark:text-red-400">
                                 {error}
                             </div>
                         )}
 
                         <div>
-                            <label className="mb-1.5 block text-sm font-medium text-slate-700">Email</label>
+                            <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">Email</label>
                             <div className="relative">
-                                <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                                <Mail className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
                                 <input
                                     id="email-input"
                                     type="email"
@@ -98,15 +98,15 @@ export default function Login() {
                                     onChange={(e) => setEmail(e.target.value)}
                                     placeholder="Enter your email"
                                     required
-                                    className="h-11 w-full rounded-lg border border-slate-200 bg-white pl-10 pr-4 text-sm text-slate-700 placeholder-slate-400 transition-all focus:border-primary-400 focus:ring-4 focus:ring-primary-100 focus:outline-none"
+                                    className="h-11 w-full rounded-lg border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-card pl-10 pr-4 text-sm text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 transition-all focus:border-primary-400 focus:ring-4 focus:ring-primary-100 dark:focus:ring-primary-900/30 focus:outline-none"
                                 />
                             </div>
                         </div>
 
                         <div>
-                            <label className="mb-1.5 block text-sm font-medium text-slate-700">Password</label>
+                            <label className="mb-1.5 block text-sm font-medium text-slate-700 dark:text-slate-300">Password</label>
                             <div className="relative">
-                                <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400" />
+                                <Lock className="absolute left-3 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
                                 <input
                                     id="password-input"
                                     type={showPassword ? 'text' : 'password'}
@@ -114,12 +114,12 @@ export default function Login() {
                                     onChange={(e) => setPassword(e.target.value)}
                                     placeholder="Enter your password"
                                     required
-                                    className="h-11 w-full rounded-lg border border-slate-200 bg-white pl-10 pr-11 text-sm text-slate-700 placeholder-slate-400 transition-all focus:border-primary-400 focus:ring-4 focus:ring-primary-100 focus:outline-none"
+                                    className="h-11 w-full rounded-lg border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-card pl-10 pr-11 text-sm text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 transition-all focus:border-primary-400 focus:ring-4 focus:ring-primary-100 dark:focus:ring-primary-900/30 focus:outline-none"
                                 />
                                 <button
                                     type="button"
                                     onClick={() => setShowPassword(!showPassword)}
-                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600"
+                                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-400 hover:text-slate-600 dark:hover:text-slate-300"
                                 >
                                     {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                                 </button>
@@ -127,11 +127,11 @@ export default function Login() {
                         </div>
 
                         <div className="flex items-center justify-between">
-                            <label className="flex items-center gap-2 text-sm text-slate-600">
-                                <input type="checkbox" className="h-4 w-4 rounded border-slate-300 text-primary-600 focus:ring-primary-500" />
+                            <label className="flex items-center gap-2 text-sm text-slate-600 dark:text-slate-400">
+                                <input type="checkbox" className="h-4 w-4 rounded border-slate-300 dark:border-slate-600 text-primary-600 focus:ring-primary-500" />
                                 Remember me
                             </label>
-                            <button type="button" className="text-sm font-medium text-primary-600 hover:text-primary-700">
+                            <button type="button" className="text-sm font-medium text-primary-600 hover:text-primary-700 dark:text-primary-400 dark:hover:text-primary-300">
                                 Forgot password?
                             </button>
                         </div>

@@ -42,6 +42,12 @@ func SetupRoutes(app *fiber.App) {
 	stats.Get("/reports", handlers.GetReportsData)
 	stats.Get("/activity", handlers.GetRecentActivity)
 
+	// Notifications
+	notifications := api.Group("/notifications")
+	notifications.Get("/", handlers.GetNotifications)
+	notifications.Post("/read/:id", handlers.MarkNotificationRead)
+	notifications.Post("/read-all", handlers.MarkNotificationsRead)
+
 	// Department Routes (Admin only)
 	departments := admin.Group("/departments")
 	departments.Get("/", handlers.GetAllDepartments)
