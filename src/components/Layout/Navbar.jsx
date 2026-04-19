@@ -120,16 +120,20 @@ export default function Navbar({ onMenuClick }) {
             </div>
 
             {/* Right side */}
-            <div className="flex items-center gap-3 md:gap-5">
+            <div className="flex items-center gap-2 sm:gap-4">
                 {/* Search */}
-                <div className="relative hidden md:block">
+                <div className="relative hidden lg:block">
                     <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
                     <input
                         type="text"
-                        placeholder="Search records..."
-                        className="h-10 w-64 rounded-xl border border-slate-200 dark:border-dark-border bg-slate-50/50 dark:bg-slate-800/50 pl-11 pr-4 text-sm text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 transition-all focus:border-primary-400 focus:bg-white dark:focus:bg-slate-800 focus:ring-4 focus:ring-primary-100 dark:focus:ring-primary-900/30 focus:outline-none"
+                        placeholder="Search workspace..."
+                        className="h-10 w-[200px] xl:w-[280px] rounded-full border border-slate-200/50 dark:border-white/5 bg-slate-100/50 dark:bg-slate-800/50 pl-10 pr-4 text-sm text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 transition-all focus:w-[240px] xl:focus:w-[320px] focus:border-primary-400 focus:bg-white dark:focus:bg-slate-800 focus:ring-4 focus:ring-primary-100 dark:focus:ring-primary-900/30 focus:outline-none shadow-inner"
                     />
                 </div>
+                
+                <button className="lg:hidden rounded-full p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
+                    <Search className="h-5 w-5" />
+                </button>
 
                 {/* Theme Toggle */}
                 <button
@@ -189,7 +193,7 @@ export default function Navbar({ onMenuClick }) {
                                 transition={{ duration: 0.15 }}
                                 className="notification-panel absolute right-0 top-full z-50 mt-3 w-80 overflow-hidden rounded-2xl"
                             >
-                                <div className="bg-slate-50/80 dark:bg-slate-800/80 px-4 py-3">
+                                <div className="bg-slate-50/80 dark:bg-slate-800/80 px-6 py-4">
                                     <div className="flex items-center justify-between gap-3">
                                         <div>
                                             <p className="text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">Notifications</p>
@@ -207,19 +211,19 @@ export default function Navbar({ onMenuClick }) {
                                 </div>
                                 <div className="max-h-72 overflow-y-auto">
                                     {notificationsLoading ? (
-                                        <div className="flex h-28 items-center justify-center px-4 text-sm text-slate-500 dark:text-slate-400">
+                                        <div className="flex h-28 items-center justify-center px-6 text-sm text-slate-500 dark:text-slate-400">
                                             Loading notifications...
                                         </div>
                                     ) : notificationsError ? (
-                                        <div className="px-4 py-4 text-sm text-red-600 dark:text-red-400">{notificationsError}</div>
+                                        <div className="px-6 py-4 text-sm text-red-600 dark:text-red-400">{notificationsError}</div>
                                     ) : notifications.length === 0 ? (
-                                        <div className="px-4 py-6 text-sm text-slate-500 dark:text-slate-400">No recent notifications.</div>
+                                        <div className="px-6 py-6 text-sm text-slate-500 dark:text-slate-400">No recent notifications.</div>
                                     ) : (
                                         notifications.map((item) => (
                                             <button
                                                 key={item.id}
                                                 onClick={() => handleNotificationClick(item.id)}
-                                                className={`w-full text-left border-b border-slate-100 dark:border-dark-border px-4 py-3 last:border-b-0 ${item.read ? 'bg-white dark:bg-dark-surface' : 'bg-slate-50 dark:bg-slate-800'}`}
+                                                className={`w-full text-left border-b border-slate-100 dark:border-dark-border px-6 py-4 last:border-b-0 transition-colors ${item.read ? 'bg-white dark:bg-dark-surface hover:bg-slate-50 dark:hover:bg-slate-800/50' : 'bg-slate-50 dark:bg-slate-800 hover:bg-slate-100 dark:hover:bg-slate-700'}`}
                                             >
                                                 <p className="text-sm font-medium text-slate-800 dark:text-slate-200">{item.action}</p>
                                                 <p className="mt-1 text-xs text-slate-500 dark:text-slate-400 line-clamp-2">{item.details}</p>
@@ -268,12 +272,12 @@ export default function Navbar({ onMenuClick }) {
                                 transition={{ duration: 0.15 }}
                                 className="absolute right-0 top-full mt-3 w-56 overflow-hidden rounded-2xl border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-surface shadow-xl shadow-slate-200/60 dark:shadow-black/40 ring-1 ring-black/5 dark:ring-white/5"
                             >
-                                <div className="bg-slate-50/50 dark:bg-slate-800/50 px-4 py-3.5">
+                                <div className="bg-slate-50/50 dark:bg-slate-800/50 px-6 py-4">
                                     <p className="text-xs font-semibold uppercase tracking-widest text-slate-400 dark:text-slate-500">Account</p>
                                     <p className="mt-1 truncate text-sm font-medium text-slate-700 dark:text-slate-300">{user?.email}</p>
                                 </div>
-                                <div className="p-1.5">
-                                    <button className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-slate-600 dark:text-slate-300 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800">
+                                <div className="p-2">
+                                    <button className="flex w-full items-center gap-3 rounded-lg px-4 py-2.5 text-sm text-slate-600 dark:text-slate-300 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800">
                                         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400">
                                             <User className="h-4 w-4" />
                                         </div>
@@ -282,7 +286,7 @@ export default function Navbar({ onMenuClick }) {
                                     <div className="my-1 h-px bg-slate-100 dark:bg-dark-border" />
                                     <button
                                         onClick={() => logout()}
-                                        className="flex w-full items-center gap-3 rounded-lg px-3 py-2 text-sm text-red-600 dark:text-red-400 transition-colors hover:bg-red-50 dark:hover:bg-red-900/20"
+                                        className="flex w-full items-center gap-3 rounded-lg px-4 py-2.5 text-sm text-red-600 dark:text-red-400 transition-colors hover:bg-red-50 dark:hover:bg-red-900/20"
                                     >
                                         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-100 dark:bg-red-900/30 text-red-500 dark:text-red-400">
                                             <LogOut className="h-4 w-4" />

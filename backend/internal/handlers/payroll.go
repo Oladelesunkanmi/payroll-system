@@ -140,6 +140,31 @@ func GetAllPayrolls(c *fiber.Ctx) error {
 
 	var payrolls []models.Payroll
 	database.DB.Preload("Employee.Department").Where("period_start >= ? AND period_start <= ?", monthStart, monthEnd).Find(&payrolls)
+
+	// Calculate absences for each payroll
+	for i := range payrolls {
+		p := &payrolls[i]
+		
+		var records []models.Attendance
+		database.DB.Where("employee_id = ? AND date >= ? AND date <= ?", p.EmployeeID, p.PeriodStart, p.PeriodEnd).Find(&records)
+
+		absentDays := 0.0
+		for _, r := range records {
+			if r.Status == "Absent" {
+				absentDays += 1.0
+			} else if r.Status == "Half Day" {
+				absentDays += 0.5
+			}
+		}
+
+		// 22 working days per month standard
+		workingDays := 22.0
+		dailyRate := p.BasicSalary / workingDays
+		
+		p.AbsenceDays = absentDays
+		p.AbsenceDeduction = absentDays * dailyRate
+	}
+
 	return c.Status(200).JSON(payrolls)
 }
 
@@ -223,6 +248,30 @@ func GetMyPayrolls(c *fiber.Ctx) error {
 
 	var payrolls []models.Payroll
 	database.DB.Preload("Employee.Department").Where("employee_id = ?", requestedEmployeeID).Find(&payrolls)
+
+	// Calculate absences for each payroll
+	for i := range payrolls {
+		p := &payrolls[i]
+		
+		var records []models.Attendance
+		database.DB.Where("employee_id = ? AND date >= ? AND date <= ?", p.EmployeeID, p.PeriodStart, p.PeriodEnd).Find(&records)
+
+		absentDays := 0.0
+		for _, r := range records {
+			if r.Status == "Absent" {
+				absentDays += 1.0
+			} else if r.Status == "Half Day" {
+				absentDays += 0.5
+			}
+		}
+
+		workingDays := 22.0
+		dailyRate := p.BasicSalary / workingDays
+		
+		p.AbsenceDays = absentDays
+		p.AbsenceDeduction = absentDays * dailyRate
+	}
+
 	return c.Status(200).JSON(payrolls)
 }
 

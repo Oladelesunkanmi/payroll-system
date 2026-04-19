@@ -1,7 +1,8 @@
 import { useState, useEffect, useRef, useCallback } from 'react';
 import { api } from '../services/api';
 import toast from 'react-hot-toast';
-import { Calculator, FileSpreadsheet, CheckCircle2, Clock, DollarSign, Info } from 'lucide-react';
+import { motion } from 'framer-motion';
+import { Calculator, FileSpreadsheet, CheckCircle2, Clock, DollarSign, Info, Banknote } from 'lucide-react';
 
 export default function Payroll() {
     const [records, setRecords] = useState([]);
@@ -115,7 +116,7 @@ export default function Payroll() {
         );
     };
 
-    const calcNet = (r) => (r.basic_salary + r.allowances - r.deductions - r.tax).toFixed(2);
+    const calcNet = (r) => (r.basic_salary + r.allowances - r.deductions - (r.absence_deduction || 0) - r.tax).toFixed(2);
 
     const handleCalc = async (rec) => {
         try {
@@ -173,33 +174,46 @@ export default function Payroll() {
             Calculated: 'bg-blue-50 text-blue-700 ring-blue-600/20 dark:bg-blue-900/30 dark:text-blue-400 dark:ring-blue-500/30',
             Pending: 'bg-amber-50 text-amber-700 ring-amber-600/20 dark:bg-amber-900/30 dark:text-amber-400 dark:ring-amber-500/30',
         };
-        return `inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-medium ring-1 ring-inset ${m[status] || m.Pending}`;
+        return `inline-flex items-center rounded-full px-2.5 py-0.5 text-xs font-semibold ring-1 ring-inset ${m[status] || m.Pending}`;
+    };
+
+    const containerVariants = {
+        hidden: { opacity: 0 },
+        visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
+    };
+    
+    const itemVariants = {
+        hidden: { y: 20, opacity: 0 },
+        visible: { y: 0, opacity: 1, transition: { type: 'spring', stiffness: 300, damping: 24 } }
     };
 
     return (
-        <div className="space-y-5 animate-fade-in">
+        <motion.div variants={containerVariants} initial="hidden" animate="visible" className="space-y-6 pb-10">
             {/* Header */}
-            <div className="flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+            <motion.div variants={itemVariants} className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div>
-                    <h2 className="text-xl font-bold text-slate-800 dark:text-white">Payroll Processing</h2>
-                    <div className="flex items-center gap-2">
-                        <p className="text-sm text-slate-500 dark:text-slate-400">March 2026 — {records.length} employees</p>
+                    <h2 className="text-2xl font-black tracking-tight text-slate-800 dark:text-white flex items-center gap-2">
+                        <Banknote className="h-6 w-6 text-primary-500" />
+                        Payroll Processing
+                    </h2>
+                    <div className="flex items-center gap-2 mt-1">
+                        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{new Date().toLocaleString('default', { month: 'long', year: 'numeric' })} — {records.length} employees</p>
                         {saving && (
-                            <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-primary-500 animate-pulse">
+                            <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-primary-500 animate-pulse bg-primary-100 dark:bg-primary-900/30 px-2 py-0.5 rounded-full">
                                 <Clock className="h-3 w-3" /> Auto-Saving
                             </span>
                         )}
                     </div>
                 </div>
-                <div className="flex gap-3">
-                    <button onClick={handleGenerate} className="inline-flex items-center gap-2 rounded-lg border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-card px-4 py-2.5 text-sm font-semibold text-slate-700 dark:text-slate-300 hover:bg-slate-50 dark:hover:bg-slate-700">
+                <div className="flex flex-col sm:flex-row gap-3">
+                    <button onClick={handleGenerate} className="inline-flex h-[44px] items-center justify-center gap-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-5 text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-sm transition-all active:scale-95">
                         <Calculator className="h-4 w-4 shrink-0" />
                         <span>Generate Monthly List</span>
                     </button>
                     <button 
                         onClick={handlePaystack} 
                         disabled={processing || records.filter(r => r.payment_status === 'Pending').length === 0}
-                        className="inline-flex items-center gap-2 rounded-lg bg-emerald-600 px-4 py-2.5 text-sm font-semibold text-white shadow-lg shadow-emerald-500/25 transition-all hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed"
+                        className="inline-flex h-[44px] items-center justify-center gap-2 rounded-xl bg-emerald-600 px-6 text-sm font-bold text-white shadow-lg shadow-emerald-500/25 transition-all hover:bg-emerald-700 disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
                     >
                         {processing ? (
                             <div className="h-4 w-4 animate-spin rounded-full border-2 border-white/30 border-t-white"></div>
@@ -209,126 +223,150 @@ export default function Payroll() {
                         <span>Process via Paystack</span>
                     </button>
                 </div>
-            </div>
+            </motion.div>
 
             {/* Success message */}
             {msg && (
-                <div className="animate-scale-in flex items-center gap-3 rounded-lg border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/30 px-4 py-3 text-sm text-emerald-700 dark:text-emerald-400">
-                    <CheckCircle2 className="h-4 w-4 shrink-0" /> {msg}
-                </div>
+                <motion.div variants={itemVariants} className="animate-scale-in flex items-center gap-3 rounded-xl border border-emerald-200 dark:border-emerald-800 bg-emerald-50 dark:bg-emerald-900/30 px-5 py-4 text-sm font-medium text-emerald-700 dark:text-emerald-400">
+                    <CheckCircle2 className="h-5 w-5 shrink-0" /> {msg}
+                </motion.div>
             )}
 
             {/* Summary cards */}
-            <div className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <div className="flex items-center gap-4 rounded-xl border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-surface p-4 shadow-sm">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-violet-100 dark:bg-violet-900/30">
-                        <DollarSign className="h-5 w-5 text-violet-600 dark:text-violet-400" />
-                    </div>
-                    <div className="min-w-0">
-                        <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Total Net Payroll</p>
-                        <p className="truncate text-lg font-bold text-slate-800 dark:text-white">
-                            ₦{totalNet.toLocaleString(undefined, { minimumFractionDigits: 2 })}
-                        </p>
-                    </div>
-                </div>
-                <div className="flex items-center gap-4 rounded-xl border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-surface p-4 shadow-sm">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-emerald-100 dark:bg-emerald-900/30">
-                        <CheckCircle2 className="h-5 w-5 text-emerald-600 dark:text-emerald-400" />
-                    </div>
-                    <div>
-                        <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Processed</p>
-                        <p className="text-lg font-bold text-slate-800 dark:text-white">{processed} / {records.length}</p>
+            <motion.div variants={itemVariants} className="grid grid-cols-1 gap-4 sm:grid-cols-3">
+                <div className="rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white/80 dark:bg-slate-900/50 p-6 shadow-sm backdrop-blur-xl transition-all hover:-translate-y-1 hover:shadow-md">
+                    <div className="flex items-center gap-4">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 drop-shadow-sm">
+                            <DollarSign className="h-6 w-6" />
+                        </div>
+                        <div className="min-w-0">
+                            <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Total Net Payroll</p>
+                            <p className="truncate text-2xl font-black text-slate-800 dark:text-white mt-1">
+                                ₦{totalNet.toLocaleString(undefined, { minimumFractionDigits: 2 })}
+                            </p>
+                        </div>
                     </div>
                 </div>
-                <div className="flex items-center gap-4 rounded-xl border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-surface p-4 shadow-sm">
-                    <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-lg bg-amber-100 dark:bg-amber-900/30">
-                        <Clock className="h-5 w-5 text-amber-600 dark:text-amber-400" />
-                    </div>
-                    <div>
-                        <p className="text-xs font-medium text-slate-500 dark:text-slate-400">Pending</p>
-                        <p className="text-lg font-bold text-slate-800 dark:text-white">{records.length - processed}</p>
+                <div className="rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white/80 dark:bg-slate-900/50 p-6 shadow-sm backdrop-blur-xl transition-all hover:-translate-y-1 hover:shadow-md">
+                    <div className="flex items-center gap-4">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 drop-shadow-sm">
+                            <CheckCircle2 className="h-6 w-6" />
+                        </div>
+                        <div>
+                            <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Processed</p>
+                            <p className="text-2xl font-black text-slate-800 dark:text-white mt-1">{processed} <span className="text-lg text-slate-400 font-medium tracking-normal">/ {records.length}</span></p>
+                        </div>
                     </div>
                 </div>
-            </div>
+                <div className="rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white/80 dark:bg-slate-900/50 p-6 shadow-sm backdrop-blur-xl transition-all hover:-translate-y-1 hover:shadow-md">
+                    <div className="flex items-center gap-4">
+                        <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 drop-shadow-sm">
+                            <Clock className="h-6 w-6" />
+                        </div>
+                        <div>
+                            <p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Pending</p>
+                            <p className="text-2xl font-black text-slate-800 dark:text-white mt-1">{records.length - processed}</p>
+                        </div>
+                    </div>
+                </div>
+            </motion.div>
 
             {/* Payroll table */}
-            <div className="overflow-hidden rounded-xl border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-surface shadow-sm">
-                <div className="overflow-x-auto">
-                    <table className="w-full min-w-[900px] text-left text-sm">
+            <motion.div variants={itemVariants} className="overflow-hidden rounded-3xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-slate-900 shadow-xl shadow-slate-200/40 dark:shadow-black/20">
+                <div className="overflow-x-auto custom-scrollbar">
+                    <table className="w-full min-w-[1000px] text-left text-sm">
                         <thead>
-                            <tr className="border-b border-slate-100 dark:border-dark-border bg-slate-50 dark:bg-dark-card">
-                                <th className="whitespace-nowrap px-4 py-3 font-semibold text-slate-600 dark:text-slate-300">Employee</th>
-                                <th className="whitespace-nowrap px-4 py-3 font-semibold text-slate-600 dark:text-slate-300">Department</th>
-                                <th className="whitespace-nowrap px-4 py-3 font-semibold text-slate-600 dark:text-slate-300 text-right">Base Salary</th>
-                                <th className="whitespace-nowrap px-4 py-3 font-semibold text-slate-600 dark:text-slate-300 text-right">Bonus</th>
-                                <th className="whitespace-nowrap px-4 py-3 font-semibold text-slate-600 dark:text-slate-300 text-right">Deductions</th>
-                                <th className="group relative whitespace-nowrap px-4 py-3 font-semibold text-slate-600 dark:text-slate-300 text-right text-red-500 dark:text-red-400">
+                            <tr className="border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-slate-800/20">
+                                <th className="whitespace-nowrap px-6 py-4 font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-xs">Employee</th>
+                                <th className="whitespace-nowrap px-6 py-4 font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-xs">Department</th>
+                                <th className="whitespace-nowrap px-6 py-4 font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-xs text-right">Base Salary</th>
+                                <th className="whitespace-nowrap px-6 py-4 font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-xs text-right">Bonus</th>
+                                <th className="whitespace-nowrap px-6 py-4 font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-xs text-right">Deductions</th>
+                                <th className="whitespace-nowrap px-6 py-4 font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-xs text-center">Absences</th>
+                                <th className="whitespace-nowrap px-6 py-4 font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-xs text-right text-amber-600 dark:text-amber-500">Absnt Deduct</th>
+                                <th className="group relative whitespace-nowrap px-6 py-4 font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-xs text-right text-red-500 dark:text-red-400">
                                     <div className="flex items-center justify-end gap-1.5">
                                         Tax
-                                        <Info className="h-3.5 w-3.5 text-slate-400 dark:text-slate-500 cursor-help" />
+                                        <Info className="h-4 w-4 text-slate-400 dark:text-slate-500 cursor-help" />
                                     </div>
-                                    <div className="invisible absolute right-0 top-full z-50 mt-2 w-64 rounded-xl border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-card p-3.5 text-left text-xs font-normal text-slate-600 dark:text-slate-300 shadow-xl shadow-slate-200/60 dark:shadow-black/40 transition-all group-hover:visible">
+                                    <div className="invisible absolute right-6 top-full z-50 mt-2 w-64 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-800 p-4 text-left text-xs font-normal text-slate-600 dark:text-slate-300 shadow-xl shadow-slate-200/60 dark:shadow-black/40 transition-all group-hover:visible normal-case tracking-normal">
                                         <p className="mb-2 font-bold text-slate-800 dark:text-white uppercase tracking-wider">Nigerian PAYE Rules</p>
-                                        <ul className="space-y-1.5 list-disc pl-3">
-                                            <li><span className="font-medium">Consolidated Relief (CRA):</span> Higher of ₦200k or 1% Gross + 20% Gross (Annualized).</li>
-                                            <li><span className="font-medium">Pension:</span> 8% of Basic+Housing+Transport</li>
-                                            <li><span className="font-medium">NHF:</span> 2.5% of Basic</li>
-                                            <li><span className="font-medium">Taxable:</span> Gross - CRA - Deductions</li>
+                                        <ul className="space-y-2 list-disc pl-3">
+                                            <li><span className="font-semibold text-slate-700 dark:text-slate-200">Consolidated Relief (CRA):</span> Higher of ₦200k or 1% Gross + 20% Gross (Annualized).</li>
+                                            <li><span className="font-semibold text-slate-700 dark:text-slate-200">Pension:</span> 8% of Basic+Housing+Transport</li>
+                                            <li><span className="font-semibold text-slate-700 dark:text-slate-200">NHF:</span> 2.5% of Basic</li>
+                                            <li><span className="font-semibold text-slate-700 dark:text-slate-200">Taxable:</span> Gross - CRA - Deductions</li>
                                         </ul>
                                     </div>
                                 </th>
-                                <th className="whitespace-nowrap px-4 py-3 font-semibold text-slate-600 dark:text-slate-300 text-right">Net Pay</th>
-                                <th className="whitespace-nowrap px-4 py-3 font-semibold text-slate-600 dark:text-slate-300 text-center">Status</th>
-                                <th className="whitespace-nowrap px-4 py-3 font-semibold text-slate-600 dark:text-slate-300 text-center">Action</th>
+                                <th className="whitespace-nowrap px-6 py-4 font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-xs text-right text-emerald-600 dark:text-emerald-500">Net Pay</th>
+                                <th className="whitespace-nowrap px-6 py-4 font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-xs text-center">Status</th>
+                                <th className="whitespace-nowrap px-6 py-4 font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-xs text-center">Action</th>
                             </tr>
                         </thead>
-                        <tbody className="divide-y divide-slate-100 dark:divide-dark-border">
-                            {records.map((rec) => (
-                                <tr key={rec.id} className="transition-colors hover:bg-slate-50/70 dark:hover:bg-slate-800/50">
-                                    <td className="whitespace-nowrap px-4 py-3.5">
-                                        <p className="font-medium text-slate-800 dark:text-slate-200">{rec.employee?.first_name} {rec.employee?.last_name}</p>
-                                        <p className="text-xs text-slate-400 dark:text-slate-500">EMP{String(rec.employee_id).padStart(3, '0')}</p>
+                        <tbody className="divide-y divide-slate-100 dark:divide-white/5">
+                            {loading ? (
+                                <tr>
+                                    <td colSpan={11} className="py-12 text-center text-slate-500">
+                                        <div className="flex justify-center items-center h-full">
+                                            <div className="h-6 w-6 animate-spin rounded-full border-2 border-primary-200 border-t-primary-600"></div>
+                                        </div>
                                     </td>
-                                    <td className="whitespace-nowrap px-4 py-3.5 text-slate-600 dark:text-slate-300">{rec.employee?.department?.name || 'Unassigned'}</td>
-                                    <td className="whitespace-nowrap px-4 py-3.5 text-right">
+                                </tr>
+                            ) : records.map((rec) => (
+                                <tr key={rec.id} className="transition-colors hover:bg-slate-50/80 dark:hover:bg-slate-800/40 group">
+                                    <td className="whitespace-nowrap px-6 py-4">
+                                        <div className="flex items-center gap-3">
+                                            <div className="flex h-10 w-10 shrink-0 items-center justify-center rounded-xl bg-gradient-to-br from-primary-400 to-primary-600 shadow-sm text-sm font-bold text-white">
+                                                {rec.employee?.first_name?.[0]}{rec.employee?.last_name?.[0]}
+                                            </div>
+                                            <div className="min-w-0">
+                                                <p className="font-bold text-slate-800 dark:text-slate-200">{rec.employee?.first_name} {rec.employee?.last_name}</p>
+                                                <p className="text-xs font-medium text-slate-500 dark:text-slate-400">EMP{String(rec.employee_id).padStart(3, '0')}</p>
+                                            </div>
+                                        </div>
+                                    </td>
+                                    <td className="whitespace-nowrap px-6 py-4 font-medium text-slate-600 dark:text-slate-300">{rec.employee?.department?.name || 'Unassigned'}</td>
+                                    <td className="whitespace-nowrap px-6 py-4 text-right">
                                         <input
                                             type="number"
                                             value={rec.basic_salary}
                                             onChange={(e) => handleFieldChange(rec.id, 'basic_salary', e.target.value)}
-                                            className="w-32 rounded border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-card px-2 py-1 text-right text-sm font-mono text-slate-700 dark:text-slate-200 transition-all focus:border-primary-400 focus:ring-4 focus:ring-primary-100 dark:focus:ring-primary-900/30 focus:outline-none"
+                                            className="h-[36px] w-[140px] rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 text-right text-sm font-mono font-medium text-slate-700 dark:text-slate-200 transition-all focus:border-primary-400 focus:ring-2 focus:ring-primary-100 dark:focus:ring-primary-900/30 focus:outline-none"
                                         />
                                     </td>
-                                    <td className="whitespace-nowrap px-4 py-3.5 text-right">
+                                    <td className="whitespace-nowrap px-6 py-4 text-right">
                                         <input
                                             type="number"
                                             value={rec.allowances}
                                             onChange={(e) => handleFieldChange(rec.id, 'allowances', e.target.value)}
-                                            className="w-24 rounded border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-card px-2 py-1 text-right text-sm text-slate-700 dark:text-slate-200 transition-all focus:border-primary-400 focus:ring-4 focus:ring-primary-100 dark:focus:ring-primary-900/30 focus:outline-none"
+                                            className="h-[36px] w-[100px] rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 text-right text-sm font-mono font-medium text-slate-700 dark:text-slate-200 transition-all focus:border-primary-400 focus:ring-2 focus:ring-primary-100 dark:focus:ring-primary-900/30 focus:outline-none"
                                         />
                                     </td>
-                                    <td className="whitespace-nowrap px-4 py-3.5 text-right">
-                                        <input
-                                            type="number"
-                                            value={rec.deductions}
-                                            onChange={(e) => handleFieldChange(rec.id, 'deductions', e.target.value)}
-                                            className="w-24 rounded border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-card px-2 py-1 text-right text-sm text-slate-700 dark:text-slate-200 transition-all focus:border-primary-400 focus:ring-4 focus:ring-primary-100 dark:focus:ring-primary-900/30 focus:outline-none"
-                                        />
+                                    <td className="whitespace-nowrap px-6 py-4 text-right font-mono text-sm font-bold text-slate-500 dark:text-slate-400">
+                                        ₦{(rec.deductions || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                     </td>
-                                    <td className="whitespace-nowrap px-4 py-3.5 text-right font-mono text-red-500 dark:text-red-400">
+                                    <td className="whitespace-nowrap px-6 py-4 text-center text-sm font-bold text-slate-600 dark:text-slate-300">
+                                        <span className="bg-slate-100 dark:bg-slate-800 px-3 py-1 rounded-md">{rec.absence_days || 0}d</span>
+                                    </td>
+                                    <td className="whitespace-nowrap px-6 py-4 text-right font-mono text-sm font-bold text-amber-600 dark:text-amber-500">
+                                        <span className="bg-amber-50 dark:bg-amber-900/20 px-2 py-1 rounded">₦{(rec.absence_deduction || 0).toLocaleString(undefined, { minimumFractionDigits: 2 })}</span>
+                                    </td>
+                                    <td className="whitespace-nowrap px-6 py-4 text-right font-mono text-sm font-bold text-red-500 dark:text-red-400">
                                         ₦{rec.tax?.toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                     </td>
-                                    <td className="whitespace-nowrap px-4 py-3.5 text-right font-semibold text-slate-800 dark:text-white">
+                                    <td className="whitespace-nowrap px-6 py-4 text-right font-mono text-sm font-black text-emerald-600 dark:text-emerald-400">
                                         ₦{Number(rec.net_salary || calcNet(rec)).toLocaleString(undefined, { minimumFractionDigits: 2 })}
                                     </td>
-                                    <td className="whitespace-nowrap px-4 py-3.5 text-center">
+                                    <td className="whitespace-nowrap px-6 py-4 text-center">
                                         <span className={badge(rec.payment_status)}>{rec.payment_status}</span>
                                     </td>
-                                    <td className="whitespace-nowrap px-4 py-3.5 text-center">
+                                    <td className="whitespace-nowrap px-6 py-4 text-center">
                                         <button
                                             onClick={() => handleCalc(rec)}
-                                            className="inline-flex items-center gap-1.5 rounded-lg px-3 py-1.5 text-xs font-medium text-primary-600 dark:text-primary-400 transition-colors hover:bg-primary-50 dark:hover:bg-primary-900/20"
+                                            className="inline-flex h-[36px] items-center justify-center gap-1.5 rounded-lg border border-primary-200 dark:border-primary-900/50 bg-primary-50 dark:bg-primary-900/10 px-3 text-xs font-bold text-primary-600 dark:text-primary-400 transition-colors hover:bg-primary-100 dark:hover:bg-primary-900/30"
                                         >
-                                            <Calculator className="h-3.5 w-3.5" /> Calculate
+                                            <Calculator className="h-3.5 w-3.5" /> Calc
                                         </button>
                                     </td>
                                 </tr>
@@ -336,7 +374,7 @@ export default function Payroll() {
                         </tbody>
                     </table>
                 </div>
-            </div>
-        </div>
+            </motion.div>
+        </motion.div>
     );
 }

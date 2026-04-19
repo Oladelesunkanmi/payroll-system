@@ -18,6 +18,7 @@ const menuItems = [
     { label: 'Dashboard', icon: LayoutDashboard, path: '/' },
     { label: 'Employees', icon: Users, path: '/employees' },
     { label: 'Departments', icon: Building2, path: '/departments' },
+    { label: 'Attendance', icon: FileText, path: '/attendance' },
     { label: 'Payroll', icon: Banknote, path: '/payroll' },
     { label: 'Payslips', icon: FileText, path: '/payslips' },
     { label: 'Reports', icon: BarChart3, path: '/reports' },

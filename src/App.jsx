@@ -12,6 +12,7 @@ import Payslips from './pages/Payslips';
 import Reports from './pages/Reports';
 import Departments from './pages/Departments';
 import Settings from './pages/Settings';
+import Attendance from './pages/Attendance';
 
 function ProtectedRoute({ children }) {
     const { user } = useAuth();
@@ -56,6 +57,7 @@ export default function App() {
                         <Route index element={<Dashboard />} />
                         <Route path="employees" element={<Employees />} />
                         <Route path="departments" element={<Departments />} />
+                        <Route path="attendance" element={<Attendance />} />
                         <Route path="payroll" element={<Payroll />} />
                         <Route path="payslips" element={<Payslips />} />
                         <Route path="reports" element={<Reports />} />

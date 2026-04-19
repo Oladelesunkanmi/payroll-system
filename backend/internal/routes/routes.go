@@ -56,6 +56,14 @@ func SetupRoutes(app *fiber.App) {
 	departments.Put("/:id", handlers.UpdateDepartment)
 	departments.Delete("/:id", handlers.DeleteDepartment)
 
+	// Attendance Routes (Admin/HR only for writes)
+	attendance := admin.Group("/attendance")
+	attendance.Get("/", handlers.GetAttendance)
+	attendance.Post("/", handlers.MarkAttendance)
+	attendance.Post("/bulk", handlers.BulkMarkAttendance)
+	attendance.Get("/employee/:id", handlers.GetEmployeeMonthlyAttendance)
+	attendance.Get("/summary/:id", handlers.GetAttendanceSummary)
+
 	// Health Check Route
 	app.Get("/health", func(c *fiber.Ctx) error {
 		return c.Status(200).JSON(fiber.Map{
