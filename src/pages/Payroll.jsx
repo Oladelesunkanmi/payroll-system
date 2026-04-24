@@ -5,6 +5,8 @@ import { motion } from 'framer-motion';
 import { Calculator, FileSpreadsheet, CheckCircle2, Clock, DollarSign, Info, Banknote } from 'lucide-react';
 
 export default function Payroll() {
+    const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
     const [records, setRecords] = useState([]);
     const [loading, setLoading] = useState(true);
     const [processing, setProcessing] = useState(false);
@@ -14,12 +16,12 @@ export default function Payroll() {
 
     useEffect(() => {
         fetchPayrolls();
-    }, []);
+    }, [selectedMonth, selectedYear]);
 
     const fetchPayrolls = async () => {
         setLoading(true);
         try {
-            const data = await api.getPayrolls();
+            const data = await api.getPayrolls(selectedMonth, selectedYear);
             setRecords(data);
         } catch (error) {
             console.error('Failed to fetch payrolls:', error);
@@ -197,7 +199,28 @@ export default function Payroll() {
                         Payroll Processing
                     </h2>
                     <div className="flex items-center gap-2 mt-1">
-                        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{new Date().toLocaleString('default', { month: 'long', year: 'numeric' })} — {records.length} employees</p>
+                        <div className="flex items-center gap-1.5">
+                            <select 
+                                value={selectedMonth} 
+                                onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+                                className="bg-transparent border-none p-0 text-sm font-bold text-slate-700 dark:text-slate-300 focus:ring-0 cursor-pointer hover:text-primary-600 transition-colors"
+                            >
+                                {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map((m, i) => (
+                                    <option key={m} value={i + 1}>{m}</option>
+                                ))}
+                            </select>
+                            <select 
+                                value={selectedYear} 
+                                onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                                className="bg-transparent border-none p-0 text-sm font-bold text-slate-700 dark:text-slate-300 focus:ring-0 cursor-pointer hover:text-primary-600 transition-colors"
+                            >
+                                {[2024, 2025, 2026, 2027].map(y => (
+                                    <option key={y} value={y}>{y}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <span className="text-slate-300 dark:text-slate-600">|</span>
+                        <p className="text-sm font-medium text-slate-500 dark:text-slate-400">{records.length} employees</p>
                         {saving && (
                             <span className="flex items-center gap-1.5 text-[10px] font-bold uppercase tracking-widest text-primary-500 animate-pulse bg-primary-100 dark:bg-primary-900/30 px-2 py-0.5 rounded-full">
                                 <Clock className="h-3 w-3" /> Auto-Saving

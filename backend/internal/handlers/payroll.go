@@ -2,6 +2,7 @@ package handlers
 
 import (
 	"fmt"
+	"strconv"
 	"time"
 
 	"github.com/Oladelesunkanmi/payroll-system/backend/internal/models"
@@ -106,13 +107,30 @@ func CalculateNigerianPIT(monthlyGross float64) float64 {
 	return monthlyTax
 }
 
-// GetAllPayrolls returns a list of all payroll records for the current month
+// GetAllPayrolls returns a list of all payroll records for the specified month
 func GetAllPayrolls(c *fiber.Ctx) error {
 	var employees []models.Employee
 	database.DB.Find(&employees)
 
+	monthStr := c.Query("month")
+	yearStr := c.Query("year")
+
 	now := time.Now()
-	monthStart := time.Date(now.Year(), now.Month(), 1, 0, 0, 0, 0, now.Location())
+	month := int(now.Month())
+	year := now.Year()
+
+	if monthStr != "" {
+		if m, err := strconv.Atoi(monthStr); err == nil && m >= 1 && m <= 12 {
+			month = m
+		}
+	}
+	if yearStr != "" {
+		if y, err := strconv.Atoi(yearStr); err == nil && y > 1900 {
+			year = y
+		}
+	}
+
+	monthStart := time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.Local)
 	monthEnd := monthStart.AddDate(0, 1, -1)
 
 	for _, emp := range employees {

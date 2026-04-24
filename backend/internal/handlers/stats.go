@@ -120,7 +120,28 @@ func MarkNotificationsRead(c *fiber.Ctx) error {
 }
 
 func GetReportsData(c *fiber.Ctx) error {
-	// Monthly Payroll Totals (Last 6 months)
+	monthStr := c.Query("month")
+	yearStr := c.Query("year")
+
+	now := time.Now()
+	month := int(now.Month())
+	year := now.Year()
+
+	if monthStr != "" {
+		if m, err := strconv.Atoi(monthStr); err == nil && m >= 1 && m <= 12 {
+			month = m
+		}
+	}
+	if yearStr != "" {
+		if y, err := strconv.Atoi(yearStr); err == nil && y > 1900 {
+			year = y
+		}
+	}
+
+	monthStart := time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.Local)
+	monthEnd := monthStart.AddDate(0, 1, -1)
+
+	// Monthly Payroll Totals (Last 6 months leading up to selected month)
 	type MonthlyTotal struct {
 		Month string  `json:"month"`
 		Total float64 `json:"total"`
@@ -128,21 +149,28 @@ func GetReportsData(c *fiber.Ctx) error {
 	var monthlyTotals []MonthlyTotal
 	database.DB.Model(&models.Payroll{}).
 		Select("to_char(period_start, 'Mon YYYY') as month, SUM(net_salary) as total").
+		Where("period_start <= ?", monthEnd).
 		Group("month").
-		Order("MIN(period_start)").
+		Order("MIN(period_start) DESC").
 		Limit(6).
 		Scan(&monthlyTotals)
 
-	// Department Distribution
+	// Reverse for chronological order in chart
+	for i, j := 0, len(monthlyTotals)-1; i < j; i, j = i+1, j-1 {
+		monthlyTotals[i], monthlyTotals[j] = monthlyTotals[j], monthlyTotals[i]
+	}
+
+	// Department Distribution for the SELECTED month
 	type DeptDist struct {
 		Name        string  `json:"name"`
 		Count       int64   `json:"count"`
 		TotalSalary float64 `json:"total_salary"`
 	}
 	var deptDists []DeptDist
-	database.DB.Model(&models.Department{}).
-		Select("departments.name, COUNT(DISTINCT employees.id) as count, COALESCE(SUM(employees.salary), 0) as total_salary").
+	database.DB.Table("departments").
+		Select("departments.name, COUNT(DISTINCT payrolls.id) as count, COALESCE(SUM(payrolls.net_salary), 0) as total_salary").
 		Joins("LEFT JOIN employees ON employees.department_id = departments.id AND employees.deleted_at IS NULL").
+		Joins("LEFT JOIN payrolls ON payrolls.employee_id = employees.id AND payrolls.period_start >= ? AND payrolls.period_start <= ?", monthStart, monthEnd).
 		Group("departments.name").
 		Scan(&deptDists)
 

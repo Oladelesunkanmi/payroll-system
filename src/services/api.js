@@ -60,7 +60,14 @@ export const api = {
     deleteEmployee: (id) => apiRequest(`/api/employees/${id}`, 'DELETE'),
 
     // Payrolls
-    getPayrolls: () => apiRequest('/api/payrolls'),
+    getPayrolls: (month, year) => {
+        let url = '/api/payrolls';
+        const params = new URLSearchParams();
+        if (month) params.append('month', month);
+        if (year) params.append('year', year);
+        if (params.toString()) url += `?${params.toString()}`;
+        return apiRequest(url);
+    },
     getPayroll: (id) => apiRequest(`/api/payrolls/${id}`),
     createPayroll: (data) => apiRequest('/api/payrolls', 'POST', data),
     updatePayroll: (id, data) => apiRequest(`/api/payrolls/${id}`, 'PUT', data),
@@ -75,7 +82,14 @@ export const api = {
 
     // Stats & Reports
     getDashboardStats: () => apiRequest('/api/stats/dashboard'),
-    getReportsData: () => apiRequest('/api/stats/reports'),
+    getReportsData: (month, year) => {
+        let url = '/api/stats/reports';
+        const params = new URLSearchParams();
+        if (month) params.append('month', month);
+        if (year) params.append('year', year);
+        if (params.toString()) url += `?${params.toString()}`;
+        return apiRequest(url);
+    },
     getRecentActivity: () => apiRequest('/api/stats/activity'),
     getNotifications: () => apiRequest('/api/notifications'),
     markNotificationRead: (id) => apiRequest(`/api/notifications/read/${id}`, 'POST'),

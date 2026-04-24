@@ -15,6 +15,7 @@ export default function Dashboard() {
     const [statsData, setStatsData] = useState(null);
     const [activities, setActivities] = useState([]);
     const [loading, setLoading] = useState(true);
+    const [error, setError] = useState(null);
 
     useEffect(() => {
         const fetchDashboardData = async () => {
@@ -23,6 +24,7 @@ export default function Dashboard() {
                 return;
             }
             setLoading(true);
+            setError(null);
             try {
                 const [stats, recentActivities] = await Promise.all([
                     api.getDashboardStats(),
@@ -30,9 +32,10 @@ export default function Dashboard() {
                 ]);
                 setStatsData(stats);
                 setActivities(recentActivities);
-            } catch (error) {
-                console.error('Failed to fetch dashboard data:', error);
-                toast.error(error.message || 'Failed to fetch dashboard data');
+            } catch (err) {
+                console.error('Failed to fetch dashboard data:', err);
+                setError(err.message || 'Failed to sync with command center.');
+                toast.error(err.message || 'Data synchronization failed');
             } finally {
                 setLoading(false);
             }
@@ -40,13 +43,34 @@ export default function Dashboard() {
         fetchDashboardData();
     }, [user]);
 
-    if (loading || !statsData) {
+    if (loading) {
         return (
-            <div className="flex h-[80vh] items-center justify-center">
-                <div className="relative flex h-16 w-16">
-                    <div className="absolute h-full w-full rounded-full border-4 border-primary-200 dark:border-primary-900 border-t-primary-600 animate-spin"></div>
-                    <div className="absolute h-full w-full rounded-full border-4 border-transparent border-b-violet-500 animate-spin flex-reverse opacity-50" style={{ animationDirection: 'reverse', animationDuration: '1.5s' }}></div>
+            <div className="flex h-[80vh] flex-col items-center justify-center gap-6">
+                <div className="relative flex h-20 w-20">
+                    <div className="absolute h-full w-full rounded-full border-[6px] border-primary-200 dark:border-primary-900/30 border-t-primary-600 animate-spin"></div>
+                    <div className="absolute h-full w-full rounded-full border-[6px] border-transparent border-b-violet-500 animate-spin opacity-50" style={{ animationDirection: 'reverse', animationDuration: '1.2s' }}></div>
                 </div>
+                <p className="text-sm font-bold text-slate-400 animate-pulse tracking-widest uppercase">Synchronizing Command Center...</p>
+            </div>
+        );
+    }
+
+    if (error || !statsData) {
+        return (
+            <div className="flex h-[80vh] flex-col items-center justify-center gap-6 text-center px-4">
+                <div className="h-20 w-20 rounded-3xl bg-red-100 dark:bg-red-900/20 flex items-center justify-center text-red-600 dark:text-red-400 shadow-xl shadow-red-500/10">
+                    <Activity className="h-10 w-10" />
+                </div>
+                <div className="max-w-md space-y-2">
+                    <h2 className="text-2xl font-black text-slate-800 dark:text-white tracking-tight">Sync Interrupted</h2>
+                    <p className="text-slate-500 dark:text-slate-400 font-medium">{error || "The system encountered an unexpected protocols breach. Please refresh your session."}</p>
+                </div>
+                <button 
+                    onClick={() => window.location.reload()}
+                    className="rounded-xl bg-slate-900 dark:bg-white px-8 py-3 text-sm font-bold text-white dark:text-slate-900 transition-transform active:scale-95"
+                >
+                    Retry Connection
+                </button>
             </div>
         );
     }
@@ -83,7 +107,7 @@ export default function Dashboard() {
             bgDark: 'dark:bg-blue-900/10',
             textLight: 'text-blue-600',
             textDark: 'dark:text-blue-400',
-            path: '/employees',
+            path: '/dashboard/employees',
         },
         {
             label: 'Payroll Progress',
@@ -96,7 +120,7 @@ export default function Dashboard() {
             bgDark: 'dark:bg-emerald-900/10',
             textLight: 'text-emerald-700',
             textDark: 'dark:text-emerald-400',
-            path: '/payroll',
+            path: '/dashboard/payroll',
         },
         {
             label: 'Total Disbursed',
@@ -109,7 +133,7 @@ export default function Dashboard() {
             bgDark: 'dark:bg-violet-900/10',
             textLight: 'text-violet-700',
             textDark: 'dark:text-violet-400',
-            path: '/reports',
+            path: '/dashboard/reports',
         },
         {
             label: 'Pending Approvals',
@@ -122,7 +146,7 @@ export default function Dashboard() {
             bgDark: 'dark:bg-amber-900/10',
             textLight: 'text-amber-700',
             textDark: 'dark:text-amber-400',
-            path: '/payroll',
+            path: '/dashboard/payroll',
         },
     ];
 
@@ -153,7 +177,7 @@ export default function Dashboard() {
                     <p className="text-slate-500 dark:text-slate-400 leading-relaxed text-sm">Your employee dashboard is being personalized. For now, you can view your monthly earnings and download payslips.</p>
                 </div>
                 <button 
-                    onClick={() => navigate('/payslips')}
+                    onClick={() => navigate('/dashboard/payslips')}
                     className="mt-4 rounded-xl bg-slate-900 dark:bg-white px-8 py-3.5 font-bold text-white dark:text-slate-900 shadow-xl shadow-slate-900/20 dark:shadow-white/10 transition-all hover:scale-105 active:scale-95"
                 >
                     View My Payslips
@@ -265,7 +289,7 @@ export default function Dashboard() {
                     
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-1 gap-4">
                         {/* Process Payroll Button */}
-                        <div onClick={() => navigate('/payroll')} className="group cursor-pointer relative overflow-hidden rounded-2xl p-5 border border-slate-200 dark:border-white/5 bg-white dark:bg-slate-900 shadow-sm transition-all duration-300 hover:shadow-xl hover:border-primary-400 dark:hover:border-primary-500/50">
+                        <div onClick={() => navigate('/dashboard/payroll')} className="group cursor-pointer relative overflow-hidden rounded-2xl p-5 border border-slate-200 dark:border-white/5 bg-white dark:bg-slate-900 shadow-sm transition-all duration-300 hover:shadow-xl hover:border-primary-400 dark:hover:border-primary-500/50">
                             <div className="absolute inset-0 bg-gradient-to-r from-primary-50 to-transparent dark:from-primary-900/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                             <div className="relative z-10 flex items-center gap-4">
                                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-100 dark:bg-primary-500/20 text-primary-600 dark:text-primary-400 group-hover:scale-110 transition-transform duration-300 shadow-inner">
@@ -282,7 +306,7 @@ export default function Dashboard() {
                         </div>
                         
                         {/* Add Staff Button */}
-                        <div onClick={() => navigate('/employees')} className="group cursor-pointer relative overflow-hidden rounded-2xl p-5 border border-slate-200 dark:border-white/5 bg-white dark:bg-slate-900 shadow-sm transition-all duration-300 hover:shadow-xl hover:border-blue-400 dark:hover:border-blue-500/50">
+                        <div onClick={() => navigate('/dashboard/employees')} className="group cursor-pointer relative overflow-hidden rounded-2xl p-5 border border-slate-200 dark:border-white/5 bg-white dark:bg-slate-900 shadow-sm transition-all duration-300 hover:shadow-xl hover:border-blue-400 dark:hover:border-blue-500/50">
                             <div className="absolute inset-0 bg-gradient-to-r from-blue-50 to-transparent dark:from-blue-900/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                             <div className="relative z-10 flex items-center gap-4">
                                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-blue-100 dark:bg-blue-500/20 text-blue-600 dark:text-blue-400 group-hover:scale-110 transition-transform duration-300 shadow-inner">
@@ -299,7 +323,7 @@ export default function Dashboard() {
                         </div>
 
                         {/* Record Attendance */}
-                        <div onClick={() => navigate('/attendance')} className="group cursor-pointer relative overflow-hidden rounded-2xl p-5 border border-slate-200 dark:border-white/5 bg-white dark:bg-slate-900 shadow-sm transition-all duration-300 hover:shadow-xl hover:border-amber-400 dark:hover:border-amber-500/50">
+                        <div onClick={() => navigate('/dashboard/attendance')} className="group cursor-pointer relative overflow-hidden rounded-2xl p-5 border border-slate-200 dark:border-white/5 bg-white dark:bg-slate-900 shadow-sm transition-all duration-300 hover:shadow-xl hover:border-amber-400 dark:hover:border-amber-500/50">
                             <div className="absolute inset-0 bg-gradient-to-r from-amber-50 to-transparent dark:from-amber-900/10 opacity-0 group-hover:opacity-100 transition-opacity"></div>
                             <div className="relative z-10 flex items-center gap-4">
                                 <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-500/20 text-amber-600 dark:text-amber-400 group-hover:scale-110 transition-transform duration-300 shadow-inner">

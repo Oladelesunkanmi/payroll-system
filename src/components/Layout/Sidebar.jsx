@@ -1,4 +1,4 @@
-import { NavLink, useNavigate } from 'react-router-dom';
+import { NavLink, useNavigate, Link } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { motion } from 'framer-motion';
 import {
@@ -15,14 +15,14 @@ import {
 } from 'lucide-react';
 
 const menuItems = [
-    { label: 'Dashboard', icon: LayoutDashboard, path: '/' },
-    { label: 'Employees', icon: Users, path: '/employees' },
-    { label: 'Departments', icon: Building2, path: '/departments' },
-    { label: 'Attendance', icon: FileText, path: '/attendance' },
-    { label: 'Payroll', icon: Banknote, path: '/payroll' },
-    { label: 'Payslips', icon: FileText, path: '/payslips' },
-    { label: 'Reports', icon: BarChart3, path: '/reports' },
-    { label: 'Settings', icon: Settings, path: '/settings' },
+    { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
+    { label: 'Employees', icon: Users, path: '/dashboard/employees' },
+    { label: 'Departments', icon: Building2, path: '/dashboard/departments' },
+    { label: 'Attendance', icon: FileText, path: '/dashboard/attendance' },
+    { label: 'Payroll', icon: Banknote, path: '/dashboard/payroll' },
+    { label: 'Payslips', icon: FileText, path: '/dashboard/payslips' },
+    { label: 'Reports', icon: BarChart3, path: '/dashboard/reports' },
+    { label: 'Settings', icon: Settings, path: '/dashboard/settings' },
 ];
 
 export default function Sidebar({ onClose }) {
@@ -38,12 +38,12 @@ export default function Sidebar({ onClose }) {
         <div className="flex h-full flex-col bg-sidebar text-white lg:glass-dark lg:border-r lg:border-white/5">
             {/* Logo */}
             <div className="flex h-20 items-center justify-between px-6">
-                <div className="flex items-center gap-3">
+                <Link to="/dashboard" className="flex items-center gap-3">
                     <div className="flex h-10 w-10 items-center justify-center rounded-xl bg-gradient-to-br from-primary-500 to-primary-700 shadow-lg shadow-primary-500/20">
                         <CircleDollarSign className="h-6 w-6 text-white" />
                     </div>
                     <span className="text-xl font-bold tracking-tight bg-gradient-to-r from-white to-white/70 bg-clip-text text-transparent">PayrollPro</span>
-                </div>
+                </Link>
                 <button
                     onClick={onClose}
                     className="rounded-lg p-2 text-white/60 hover:bg-white/10 hover:text-white lg:hidden"
@@ -63,7 +63,7 @@ export default function Sidebar({ onClose }) {
                     >
                         <NavLink
                             to={path}
-                            end={path === '/'}
+                            end={path === '/dashboard'}
                             onClick={onClose}
                             className={({ isActive }) =>
                                 `group relative flex items-center gap-3 rounded-xl px-3.5 py-2.5 text-sm font-medium transition-all duration-300 ${isActive

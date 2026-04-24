@@ -14,6 +14,8 @@ import Departments from './pages/Departments';
 import Settings from './pages/Settings';
 import Attendance from './pages/Attendance';
 
+import LandingPage from './pages/LandingPage';
+
 function ProtectedRoute({ children }) {
     const { user } = useAuth();
     if (!user) return <Navigate to="/login" replace />;
@@ -42,12 +44,13 @@ export default function App() {
             />
             <AnimatePresence mode="wait">
                 <Routes location={location} key={location.pathname}>
+                    <Route path="/" element={<LandingPage />} />
                     <Route
                         path="/login"
-                        element={user ? <Navigate to="/" replace /> : <Login />}
+                        element={user ? <Navigate to="/dashboard" replace /> : <Login />}
                     />
                     <Route
-                        path="/"
+                        path="/dashboard"
                         element={
                             <ProtectedRoute>
                                 <Layout />
@@ -63,10 +66,9 @@ export default function App() {
                         <Route path="reports" element={<Reports />} />
                         <Route path="settings" element={<Settings />} />
                     </Route>
-                    <Route path="*" element={<Navigate to="/" replace />} />
+                    <Route path="*" element={<Navigate to={user ? "/dashboard" : "/"} replace />} />
                 </Routes>
             </AnimatePresence>
         </>
     );
 }
-

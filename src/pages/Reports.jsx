@@ -18,6 +18,8 @@ ChartJS.register(CategoryScale, LinearScale, BarElement, ArcElement, Title, Tool
 
 export default function Reports() {
     const { theme } = useTheme();
+    const [selectedMonth, setSelectedMonth] = useState(new Date().getMonth() + 1);
+    const [selectedYear, setSelectedYear] = useState(new Date().getFullYear());
     const [reportsData, setReportsData] = useState(null);
     const [loading, setLoading] = useState(true);
 
@@ -27,7 +29,7 @@ export default function Reports() {
         const fetchReports = async () => {
             setLoading(true);
             try {
-                const data = await api.getReportsData();
+                const data = await api.getReportsData(selectedMonth, selectedYear);
                 setReportsData(data);
             } catch (error) {
                 console.error('Failed to fetch reports:', error);
@@ -36,7 +38,7 @@ export default function Reports() {
             }
         };
         fetchReports();
-    }, []);
+    }, [selectedMonth, selectedYear]);
 
     if (loading || !reportsData) {
         return (
@@ -151,9 +153,34 @@ export default function Reports() {
     return (
         <div className="space-y-8 animate-fade-in pb-10">
             {/* Header */}
-            <div>
-                <h2 className="text-2xl font-black tracking-tight text-slate-800 dark:text-white">Analytics Hub</h2>
-                <p className="text-sm font-medium text-slate-500 dark:text-slate-400">Deep dive into financial distributions and salary metrics</p>
+            <div className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
+                <div>
+                    <h2 className="text-2xl font-black tracking-tight text-slate-800 dark:text-white">Analytics Hub</h2>
+                    <div className="flex items-center gap-2 mt-1">
+                        <div className="flex items-center gap-1.5">
+                            <select 
+                                value={selectedMonth} 
+                                onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
+                                className="bg-transparent border-none p-0 text-sm font-bold text-slate-700 dark:text-slate-300 focus:ring-0 cursor-pointer hover:text-primary-600 transition-colors"
+                            >
+                                {["January", "February", "March", "April", "May", "June", "July", "August", "September", "October", "November", "December"].map((m, i) => (
+                                    <option key={m} value={i + 1}>{m}</option>
+                                ))}
+                            </select>
+                            <select 
+                                value={selectedYear} 
+                                onChange={(e) => setSelectedYear(parseInt(e.target.value))}
+                                className="bg-transparent border-none p-0 text-sm font-bold text-slate-700 dark:text-slate-300 focus:ring-0 cursor-pointer hover:text-primary-600 transition-colors"
+                            >
+                                {[2024, 2025, 2026, 2027].map(y => (
+                                    <option key={y} value={y}>{y}</option>
+                                ))}
+                            </select>
+                        </div>
+                        <span className="text-slate-300 dark:text-slate-600">|</span>
+                        <p className="text-sm font-medium text-slate-500 dark:text-slate-400 tracking-tight">Period Analysis</p>
+                    </div>
+                </div>
             </div>
 
             {/* Top Summaries */}

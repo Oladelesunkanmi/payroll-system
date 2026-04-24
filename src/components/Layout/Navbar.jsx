@@ -7,13 +7,13 @@ import { motion, AnimatePresence } from 'framer-motion';
 import { Menu, Search, Bell, ChevronDown, User, LogOut, ShieldCheck, UserCircle, Sun, Moon } from 'lucide-react';
 
 const pageTitles = {
-    '/': 'Overview',
-    '/employees': 'Staff Directory',
-    '/departments': 'Departments',
-    '/payroll': 'Payroll Processing',
-    '/payslips': 'My Payslips',
-    '/reports': 'Analytics & Reports',
-    '/settings': 'System Settings',
+    '/dashboard': 'Overview',
+    '/dashboard/employees': 'Staff Directory',
+    '/dashboard/departments': 'Departments',
+    '/dashboard/payroll': 'Payroll Processing',
+    '/dashboard/payslips': 'My Payslips',
+    '/dashboard/reports': 'Analytics & Reports',
+    '/dashboard/settings': 'System Settings',
 };
 
 export default function Navbar({ onMenuClick }) {
