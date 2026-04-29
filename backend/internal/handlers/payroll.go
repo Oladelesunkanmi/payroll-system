@@ -353,3 +353,44 @@ func ProcessBulkTransfer(c *fiber.Ctx) error {
 
 	return c.Status(200).JSON(fiber.Map{"message": msg, "count": len(payrolls)})
 }
+
+// BulkMarkPaid marks all pending/calculated payrolls as processed
+func BulkMarkPaid(c *fiber.Ctx) error {
+	monthStr := c.Query("month")
+	yearStr := c.Query("year")
+
+	now := time.Now()
+	month := int(now.Month())
+	year := now.Year()
+
+	if m, err := strconv.Atoi(monthStr); err == nil && m >= 1 && m <= 12 { month = m }
+	if y, err := strconv.Atoi(yearStr); err == nil && y > 1900 { year = y }
+
+	monthStart := time.Date(year, time.Month(month), 1, 0, 0, 0, 0, time.Local)
+	monthEnd := monthStart.AddDate(0, 1, -1)
+
+	var payrolls []models.Payroll
+	database.DB.Where("period_start >= ? AND period_start <= ? AND payment_status != ?", monthStart, monthEnd, "Processed").Find(&payrolls)
+
+	if len(payrolls) == 0 {
+		return c.Status(400).JSON(fiber.Map{"message": "No records found to mark as paid for this period"})
+	}
+
+	for i := range payrolls {
+		payrolls[i].PaymentStatus = "Processed"
+		database.DB.Save(&payrolls[i])
+	}
+
+	// Log Activity
+	adminID := c.Locals("user_id").(uint)
+	utils.LogActivity(
+		"Bulk Payment Recorded",
+		"payroll",
+		fmt.Sprintf("Manually marked %d salaries as paid for %s %d", len(payrolls), monthStart.Month().String(), year),
+		"CheckCircle",
+		"text-emerald-500",
+		adminID,
+	)
+
+	return c.Status(200).JSON(fiber.Map{"message": "Successfully marked all as paid", "count": len(payrolls)})
+}

@@ -27,7 +27,7 @@ export default function Settings() {
         setTimeout(() => setSaved(false), 3000);
     };
 
-    const inputClasses = "h-[44px] w-full rounded-xl border border-slate-200 dark:border-white/10 bg-slate-50/50 dark:bg-slate-900/50 px-4 text-sm font-medium text-slate-700 dark:text-slate-200 focus:bg-white dark:focus:bg-slate-900 focus:border-primary-400 focus:ring-4 focus:ring-primary-100 dark:focus:ring-primary-900/30 transition-all focus:outline-none";
+    const inputClasses = "h-[44px] w-full rounded-xl border border-slate-200 dark:border-dark-border bg-slate-50/50 dark:bg-dark-bg px-4 text-sm font-medium text-slate-700 dark:text-slate-200 focus:bg-white dark:focus:bg-dark-surface focus:border-primary-400 focus:ring-4 focus:ring-primary-100 dark:focus:ring-primary-900/30 transition-all focus:outline-none";
 
     const themeOptions = [
         { value: 'light', label: 'Light', icon: Sun, description: 'Classic light interface' },
@@ -68,8 +68,8 @@ export default function Settings() {
             )}
 
             {/* Appearance */}
-            <motion.div variants={itemVariants} className="rounded-3xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-slate-900 shadow-xl shadow-slate-200/40 dark:shadow-black/20 overflow-hidden">
-                <div className="border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-slate-800/20 px-6 py-5 flex items-center gap-4">
+            <motion.div variants={itemVariants} className="rounded-3xl border border-slate-200/80 dark:border-dark-border bg-white dark:bg-dark-surface shadow-xl shadow-slate-200/40 dark:shadow-black/20 overflow-hidden">
+                <div className="border-b border-slate-100 dark:border-dark-border bg-slate-50/50 dark:bg-dark-bg/20 px-6 py-5 flex items-center gap-4">
                     <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-900/30 shadow-sm">
                         <Sun className="h-6 w-6 text-amber-600 dark:text-amber-400" />
                     </div>
@@ -88,13 +88,13 @@ export default function Settings() {
                                 className={`group relative flex flex-col items-center gap-3 rounded-2xl border-2 p-6 transition-all duration-300 ${
                                     preference === value
                                         ? 'border-primary-500 bg-primary-50 dark:bg-primary-900/10 shadow-lg shadow-primary-500/10'
-                                        : 'border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-slate-800/20 hover:border-slate-300 dark:hover:border-slate-700 hover:shadow-md hover:bg-white dark:hover:bg-slate-800'
+                                        : 'border-slate-100 dark:border-dark-border bg-slate-50/50 dark:bg-dark-bg/20 hover:border-slate-300 dark:hover:border-dark-hover hover:shadow-md hover:bg-white dark:hover:bg-dark-hover'
                                 }`}
                             >
                                 <div className={`flex h-14 w-14 items-center justify-center rounded-2xl transition-all duration-300 ${
                                     preference === value
                                         ? 'bg-primary-500 text-white shadow-lg shadow-primary-500/30 scale-110'
-                                        : 'bg-white dark:bg-slate-700 text-slate-400 dark:text-slate-500 group-hover:bg-slate-100 dark:group-hover:bg-slate-600 group-hover:text-slate-600 dark:group-hover:text-slate-300 shadow-sm'
+                                        : 'bg-white dark:bg-dark-bg text-slate-400 dark:text-slate-500 group-hover:bg-slate-100 dark:group-hover:bg-dark-surface group-hover:text-slate-600 dark:group-hover:text-slate-300 shadow-sm'
                                 }`}>
                                     <Icon className="h-7 w-7" />
                                 </div>
@@ -118,8 +118,8 @@ export default function Settings() {
             </motion.div>
 
             {/* Profile & Company */}
-            <motion.form variants={itemVariants} onSubmit={handleSave} className="rounded-3xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-slate-900 shadow-xl shadow-slate-200/40 dark:shadow-black/20 overflow-hidden">
-                <div className="border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-slate-800/20 px-6 py-5 flex items-center gap-4">
+            <motion.form variants={itemVariants} onSubmit={handleSave} className="rounded-3xl border border-slate-200/80 dark:border-dark-border bg-white dark:bg-dark-surface shadow-xl shadow-slate-200/40 dark:shadow-black/20 overflow-hidden">
+                <div className="border-b border-slate-100 dark:border-dark-border bg-slate-50/50 dark:bg-dark-bg/20 px-6 py-5 flex items-center gap-4">
                     <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-primary-100 dark:bg-primary-900/30 shadow-sm">
                         <User className="h-6 w-6 text-primary-600 dark:text-primary-400" />
                     </div>
@@ -165,7 +165,7 @@ export default function Settings() {
                         </div>
                     </div>
 
-                    <div className="h-px bg-slate-100 dark:bg-white/5 w-full"></div>
+                    <div className="h-px bg-slate-100 dark:bg-dark-border w-full"></div>
 
                     {/* Company Section */}
                     <div>
@@ -199,7 +199,7 @@ export default function Settings() {
                     </div>
                 </div>
 
-                <div className="border-t border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-slate-800/10 px-6 py-5 sm:px-8 flex justify-end">
+                <div className="border-t border-slate-100 dark:border-dark-border bg-slate-50/50 dark:bg-dark-bg/20 px-6 py-5 sm:px-8 flex justify-end">
                     <button type="submit" className="inline-flex h-[44px] items-center justify-center gap-2 rounded-xl bg-primary-600 px-8 text-sm font-bold text-white shadow-lg shadow-primary-500/25 transition-all hover:bg-primary-700 hover:shadow-primary-500/40 active:scale-95 w-full sm:w-auto">
                         <Save className="h-5 w-5 shrink-0" />
                         <span>Save Configuration</span>

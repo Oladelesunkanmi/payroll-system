@@ -1,5 +1,5 @@
 import { useState, useRef, useEffect } from 'react';
-import { useLocation } from 'react-router-dom';
+import { useLocation, useNavigate } from 'react-router-dom';
 import { useAuth } from '../../context/AuthContext';
 import { useTheme } from '../../context/ThemeContext';
 import { api } from '../../services/api';
@@ -11,6 +11,8 @@ const pageTitles = {
     '/dashboard/employees': 'Staff Directory',
     '/dashboard/departments': 'Departments',
     '/dashboard/payroll': 'Payroll Processing',
+    '/dashboard/messages': 'Broadcast Center',
+    '/dashboard/attendance': 'Attendance Tracking',
     '/dashboard/payslips': 'My Payslips',
     '/dashboard/reports': 'Analytics & Reports',
     '/dashboard/settings': 'System Settings',
@@ -20,6 +22,7 @@ export default function Navbar({ onMenuClick }) {
     const { user, logout } = useAuth();
     const { theme, toggleTheme } = useTheme();
     const location = useLocation();
+    const navigate = useNavigate();
     const [dropdownOpen, setDropdownOpen] = useState(false);
     const [notificationsOpen, setNotificationsOpen] = useState(false);
     const [notifications, setNotifications] = useState([]);
@@ -126,11 +129,11 @@ export default function Navbar({ onMenuClick }) {
                     <Search className="pointer-events-none absolute left-3.5 top-1/2 h-4 w-4 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
                     <input
                         type="text"
-                        placeholder="Search workspace..."
+
                         className="h-10 w-[200px] xl:w-[280px] rounded-full border border-slate-200/50 dark:border-white/5 bg-slate-100/50 dark:bg-slate-800/50 pl-10 pr-4 text-sm text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 transition-all focus:w-[240px] xl:focus:w-[320px] focus:border-primary-400 focus:bg-white dark:focus:bg-slate-800 focus:ring-4 focus:ring-primary-100 dark:focus:ring-primary-900/30 focus:outline-none shadow-inner"
                     />
                 </div>
-                
+
                 <button className="lg:hidden rounded-full p-2 text-slate-500 hover:bg-slate-100 dark:hover:bg-slate-800 transition-colors">
                     <Search className="h-5 w-5" />
                 </button>
@@ -277,7 +280,13 @@ export default function Navbar({ onMenuClick }) {
                                     <p className="mt-1 truncate text-sm font-medium text-slate-700 dark:text-slate-300">{user?.email}</p>
                                 </div>
                                 <div className="p-2">
-                                    <button className="flex w-full items-center gap-3 rounded-lg px-4 py-2.5 text-sm text-slate-600 dark:text-slate-300 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800">
+                                    <button
+                                        onClick={() => {
+                                            navigate('/dashboard/settings');
+                                            setDropdownOpen(false);
+                                        }}
+                                        className="flex w-full items-center gap-3 rounded-lg px-4 py-2.5 text-sm text-slate-600 dark:text-slate-300 transition-colors hover:bg-slate-50 dark:hover:bg-slate-800"
+                                    >
                                         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-slate-100 dark:bg-slate-700 text-slate-500 dark:text-slate-400">
                                             <User className="h-4 w-4" />
                                         </div>
@@ -285,7 +294,10 @@ export default function Navbar({ onMenuClick }) {
                                     </button>
                                     <div className="my-1 h-px bg-slate-100 dark:bg-dark-border" />
                                     <button
-                                        onClick={() => logout()}
+                                        onClick={() => {
+                                            logout();
+                                            navigate('/login');
+                                        }}
                                         className="flex w-full items-center gap-3 rounded-lg px-4 py-2.5 text-sm text-red-600 dark:text-red-400 transition-colors hover:bg-red-50 dark:hover:bg-red-900/20"
                                     >
                                         <div className="flex h-8 w-8 items-center justify-center rounded-lg bg-red-100 dark:bg-red-900/30 text-red-500 dark:text-red-400">

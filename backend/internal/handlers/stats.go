@@ -26,8 +26,9 @@ func GetDashboardStats(c *fiber.Ctx) error {
 	database.DB.Model(&models.Payroll{}).Where("payment_status = ?", "Pending").Count(&pendingPayrolls)
 	database.DB.Model(&models.Payroll{}).Where("payment_status = ?", "Calculated").Count(&calculatedPayrolls)
 
-	// Total salary paid (all payrolls regardless of status - represents total disbursed/scheduled)
+	// Total salary paid (only Processed status)
 	database.DB.Model(&models.Payroll{}).
+		Where("payment_status = ?", "Processed").
 		Select("COALESCE(SUM(net_salary), 0)").
 		Row().Scan(&totalSalaryPaid)
 
@@ -50,10 +51,10 @@ func GetDashboardStats(c *fiber.Ctx) error {
 		Select("COALESCE(SUM(net_salary), 0)").
 		Row().Scan(&lastMonthSalaryPaid)
 
-	// This month's payroll total
+	// This month's payroll total (only Processed)
 	var thisMonthSalaryPaid float64
 	database.DB.Model(&models.Payroll{}).
-		Where("period_start >= ?", monthStart).
+		Where("period_start >= ? AND payment_status = ?", monthStart, "Processed").
 		Select("COALESCE(SUM(net_salary), 0)").
 		Row().Scan(&thisMonthSalaryPaid)
 
@@ -171,6 +172,7 @@ func GetReportsData(c *fiber.Ctx) error {
 		Select("departments.name, COUNT(DISTINCT payrolls.id) as count, COALESCE(SUM(payrolls.net_salary), 0) as total_salary").
 		Joins("LEFT JOIN employees ON employees.department_id = departments.id AND employees.deleted_at IS NULL").
 		Joins("LEFT JOIN payrolls ON payrolls.employee_id = employees.id AND payrolls.period_start >= ? AND payrolls.period_start <= ?", monthStart, monthEnd).
+		Where("departments.deleted_at IS NULL").
 		Group("departments.name").
 		Scan(&deptDists)
 

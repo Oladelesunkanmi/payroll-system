@@ -28,13 +28,13 @@ export default function Attendance() {
     };
 
     const handleStatusChange = (employeeId, status) => {
-        setRecords(prev => prev.map(r => 
+        setRecords(prev => prev.map(r =>
             r.employee_id === employeeId ? { ...r, status } : r
         ));
     };
 
     const handleNoteChange = (employeeId, note) => {
-        setRecords(prev => prev.map(r => 
+        setRecords(prev => prev.map(r =>
             r.employee_id === employeeId ? { ...r, note } : r
         ));
     };
@@ -67,7 +67,7 @@ export default function Attendance() {
     };
 
     const markAllPresent = () => {
-        setRecords(prev => prev.map(r => 
+        setRecords(prev => prev.map(r =>
             r.status === '' || r.status === 'Absent' ? { ...r, status: 'Present' } : r
         ));
     };
@@ -89,7 +89,7 @@ export default function Attendance() {
         hidden: { opacity: 0 },
         visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
     };
-    
+
     const itemVariants = {
         hidden: { y: 20, opacity: 0 },
         visible: { y: 0, opacity: 1, transition: { type: 'spring', stiffness: 300, damping: 24 } }
@@ -114,7 +114,7 @@ export default function Attendance() {
                             value={date}
                             onChange={(e) => setDate(e.target.value)}
                             max={new Date().toISOString().split('T')[0]}
-                            className="h-[44px] w-full sm:w-[180px] rounded-xl border border-slate-200 dark:border-white/5 bg-white dark:bg-slate-900 pl-12 pr-4 text-sm font-bold text-slate-700 dark:text-slate-200 focus:border-primary-400 focus:ring-4 focus:ring-primary-100 dark:focus:ring-primary-900/30 shadow-sm focus:outline-none transition-all"
+                            className="h-[44px] w-full sm:w-[180px] rounded-xl border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-bg pl-12 pr-4 text-sm font-bold text-slate-700 dark:text-slate-200 focus:border-primary-400 focus:ring-4 focus:ring-primary-100 dark:focus:ring-primary-900/30 shadow-sm focus:outline-none transition-all"
                         />
                     </div>
                 </div>
@@ -122,15 +122,15 @@ export default function Attendance() {
 
             {/* KPI Cards */}
             <motion.div variants={itemVariants} className="grid grid-cols-1 gap-4 sm:grid-cols-2 xl:grid-cols-4">
-                <div className="rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white/80 dark:bg-slate-900/50 p-5 shadow-sm backdrop-blur-xl flex items-center gap-4 transition-all hover:-translate-y-1 hover:shadow-md">
+                <div className="rounded-2xl border border-slate-200/80 dark:border-dark-border bg-white/80 dark:bg-dark-surface p-5 shadow-sm backdrop-blur-xl flex items-center gap-4 transition-all hover:-translate-y-1 hover:shadow-md">
                     <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-emerald-100 dark:bg-emerald-900/30 text-emerald-600 dark:text-emerald-400 drop-shadow-sm"><CheckCircle2 className="h-6 w-6" /></div>
                     <div><p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Present</p><p className="text-2xl font-black text-slate-800 dark:text-white">{records.filter(r => r.status === 'Present').length}</p></div>
                 </div>
-                <div className="rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white/80 dark:bg-slate-900/50 p-5 shadow-sm backdrop-blur-xl flex items-center gap-4 transition-all hover:-translate-y-1 hover:shadow-md">
+                <div className="rounded-2xl border border-slate-200/80 dark:border-dark-border bg-white/80 dark:bg-dark-surface p-5 shadow-sm backdrop-blur-xl flex items-center gap-4 transition-all hover:-translate-y-1 hover:shadow-md">
                     <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-red-100 dark:bg-red-900/30 text-red-600 dark:text-red-400 drop-shadow-sm"><XCircle className="h-6 w-6" /></div>
                     <div><p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Absent</p><p className="text-2xl font-black text-slate-800 dark:text-white">{records.filter(r => r.status === 'Absent').length}</p></div>
                 </div>
-                <div className="rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white/80 dark:bg-slate-900/50 p-5 shadow-sm backdrop-blur-xl flex items-center gap-4 transition-all hover:-translate-y-1 hover:shadow-md">
+                <div className="rounded-2xl border border-slate-200/80 dark:border-dark-border bg-white/80 dark:bg-dark-surface p-5 shadow-sm backdrop-blur-xl flex items-center gap-4 transition-all hover:-translate-y-1 hover:shadow-md">
                     <div className="flex h-12 w-12 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 drop-shadow-sm"><Clock className="h-6 w-6" /></div>
                     <div><p className="text-xs font-bold uppercase tracking-wider text-slate-500 dark:text-slate-400">Half Day</p><p className="text-2xl font-black text-slate-800 dark:text-white">{records.filter(r => r.status === 'Half Day').length}</p></div>
                 </div>
@@ -143,13 +143,12 @@ export default function Attendance() {
             {/* Action Bar */}
             <motion.div variants={itemVariants} className="flex flex-col gap-4 sm:flex-row sm:items-center sm:justify-between">
                 <div className="relative w-full sm:w-72">
-                    <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
                     <input
                         type="text"
-                        placeholder="Search employees..."
+
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="h-[48px] w-full rounded-2xl border border-slate-200 dark:border-white/5 bg-white dark:bg-slate-900 pl-12 pr-4 text-sm font-medium text-slate-700 dark:text-slate-200 focus:border-primary-400 focus:ring-4 focus:ring-primary-100 dark:focus:ring-primary-900/30 shadow-sm focus:outline-none transition-all"
+                        className="h-[48px] w-full rounded-2xl border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-bg px-5 pr-4 text-sm font-medium text-slate-700 dark:text-slate-200 focus:border-primary-400 focus:ring-4 focus:ring-primary-100 dark:focus:ring-primary-900/30 shadow-sm focus:outline-none transition-all"
                     />
                 </div>
                 <button
@@ -163,7 +162,7 @@ export default function Attendance() {
             </motion.div>
 
             {/* Table */}
-            <motion.div variants={itemVariants} className="overflow-hidden rounded-3xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-slate-900 shadow-xl shadow-slate-200/40 dark:shadow-black/20">
+            <motion.div variants={itemVariants} className="overflow-hidden rounded-3xl border border-slate-200/80 dark:border-dark-border bg-white dark:bg-dark-surface shadow-xl shadow-slate-200/40 dark:shadow-black/20">
                 <div className="overflow-x-auto custom-scrollbar">
                     <table className="w-full min-w-[800px] text-left text-sm">
                         <thead>
@@ -224,7 +223,7 @@ export default function Attendance() {
                                             value={emp.note}
                                             onChange={(e) => handleNoteChange(emp.employee_id, e.target.value)}
                                             placeholder="Reason for absence or note..."
-                                            className="h-[40px] w-full rounded-xl border border-slate-200 dark:border-white/5 bg-slate-50 dark:bg-slate-900/50 px-4 text-sm font-medium outline-none focus:border-primary-400 focus:bg-white dark:focus:bg-slate-900 focus:ring-2 focus:ring-primary-100 dark:focus:ring-primary-900/30 transition-all dark:text-white placeholder:text-slate-400"
+                                            className="h-[40px] w-full rounded-xl border border-slate-200 dark:border-dark-border bg-slate-50 dark:bg-dark-bg px-4 text-sm font-medium outline-none focus:border-primary-400 focus:bg-white dark:focus:bg-dark-surface focus:ring-2 focus:ring-primary-100 dark:focus:ring-primary-900/30 transition-all dark:text-white placeholder:text-slate-400"
                                         />
                                     </td>
                                 </tr>

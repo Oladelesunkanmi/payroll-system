@@ -33,6 +33,7 @@ func SetupRoutes(app *fiber.App) {
 	payrolls.Get("/employee/:employeeId", handlers.GetMyPayrolls)
 	payrolls.Post("/", middleware.AdminOnly, handlers.CreatePayroll)
 	payrolls.Post("/bulk-transfer", middleware.AdminOnly, handlers.ProcessBulkTransfer)
+	payrolls.Post("/bulk-mark-paid", middleware.AdminOnly, handlers.BulkMarkPaid)
 	payrolls.Put("/:id", middleware.AdminOnly, handlers.UpdatePayroll)
 	payrolls.Delete("/:id", middleware.AdminOnly, handlers.DeletePayroll)
 
@@ -63,6 +64,12 @@ func SetupRoutes(app *fiber.App) {
 	attendance.Post("/bulk", handlers.BulkMarkAttendance)
 	attendance.Get("/employee/:id", handlers.GetEmployeeMonthlyAttendance)
 	attendance.Get("/summary/:id", handlers.GetAttendanceSummary)
+
+	// Announcement Routes
+	announcements := api.Group("/announcements")
+	announcements.Get("/", handlers.GetAllAnnouncements)
+	announcements.Post("/", middleware.AdminOnly, handlers.CreateAnnouncement)
+	announcements.Delete("/:id", middleware.AdminOnly, handlers.DeleteAnnouncement)
 
 	// Health Check Route
 	app.Get("/health", func(c *fiber.Ctx) error {

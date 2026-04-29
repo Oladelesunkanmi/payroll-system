@@ -1,9 +1,11 @@
 package main
 
 import (
+	"fmt"
 	"log"
 	"os"
 
+	"math/rand"
 	"time"
 
 	"github.com/Oladelesunkanmi/payroll-system/backend/internal/config"
@@ -62,13 +64,16 @@ func SeedData() {
 		{Name: "Sales"},
 	}
 
+	deptIDs := make([]uint, 0)
 	for _, d := range depts {
 		var existing models.Department
 		if err := database.DB.Where("name = ?", d.Name).First(&existing).Error; err != nil {
 			log.Printf("Creating department: %s\n", d.Name)
-			if err := database.DB.Create(&d).Error; err != nil {
-				log.Printf("Failed to create department %s: %v\n", d.Name, err)
+			if err := database.DB.Create(&d).Error; err == nil {
+				deptIDs = append(deptIDs, d.ID)
 			}
+		} else {
+			deptIDs = append(deptIDs, existing.ID)
 		}
 	}
 
@@ -76,13 +81,13 @@ func SeedData() {
 	users := []models.User{
 		{Username: "admin", Email: "admin@payrollpro.com", Role: "admin"},
 		{Username: "hr", Email: "hr@payrollpro.com", Role: "hr"},
-		{Username: "sarah", Email: "sarah.johnson@company.com", Role: "user"},
+		{Username: "user", Email: "user@company.com", Role: "user"},
 	}
 
 	passwords := map[string]string{
-		"admin@payrollpro.com":      "admin123",
-		"hr@payrollpro.com":         "hr123",
-		"sarah.johnson@company.com": "emp123",
+		"admin@payrollpro.com": "admin123",
+		"hr@payrollpro.com":    "hr123",
+		"user@company.com":     "user123",
 	}
 
 	for _, u := range users {
@@ -96,43 +101,62 @@ func SeedData() {
 			if err := database.DB.Create(&u).Error; err != nil {
 				log.Printf("Failed to create user %s: %v\n", u.Email, err)
 			}
-		} else {
-			log.Printf("User already exists: %s\n", u.Email)
 		}
 	}
 
-	// Seed some employees if none exist
-	var count int64
-	database.DB.Model(&models.Employee{}).Count(&count)
-	if count == 0 {
-		var eng models.Department
-		if err := database.DB.Where("name = ?", "Engineering").First(&eng).Error; err == nil {
-			log.Println("Seeding initial employee...")
+	// Controlled Employee Seeding (10 employees, salary 150k-250k)
+	var empCount int64
+	database.DB.Model(&models.Employee{}).Count(&empCount)
+	if empCount == 0 && len(deptIDs) > 0 {
+		log.Println("Seeding 10 employees with requested salary range...")
+		
+		firstNames := []string{"James", "Mary", "John", "Patricia", "Robert", "Jennifer", "Michael", "Linda", "William", "Elizabeth"}
+		lastNames := []string{"Smith", "Johnson", "Williams", "Brown", "Jones", "Garcia", "Miller", "Davis", "Rodriguez", "Martinez"}
+
+		for i := 0; i < 10; i++ {
+			salary := float64(150000 + rand.Intn(100000))
 			emp := models.Employee{
-				FirstName:    "Sarah",
-				LastName:     "Johnson",
-				Email:        "sarah.johnson@company.com",
-				DepartmentID: eng.ID,
-				Position:     "Senior Developer",
-				Salary:       850000,
+				FirstName:    firstNames[i],
+				LastName:     lastNames[rand.Intn(len(lastNames))],
+				Email:        fmt.Sprintf("%s.%s%d@company.com", firstNames[i], lastNames[i], i),
+				Position:     "Specialist",
+				DepartmentID: deptIDs[rand.Intn(len(deptIDs))],
+				Salary:       salary,
+				DateHired:    time.Now().AddDate(0, 0, -rand.Intn(1000)),
+				AccountNumber: fmt.Sprintf("01 2345 67%d", 10+i),
+				BankCode:      "058",
+				BankName:      "GTBank",
 			}
 			if err := database.DB.Create(&emp).Error; err == nil {
-				// Create a initial payroll record for Sarah so she shows up in the Payroll page
-				payroll := models.Payroll{
+				// History: Last month's payroll (Processed)
+				lastMonthStart := time.Now().AddDate(0, -1, 0)
+				lastMonthStart = time.Date(lastMonthStart.Year(), lastMonthStart.Month(), 1, 0, 0, 0, 0, time.Local)
+				lastMonthEnd := lastMonthStart.AddDate(0, 1, -1)
+				
+				database.DB.Create(&models.Payroll{
 					EmployeeID:    emp.ID,
 					BasicSalary:   emp.Salary,
-					Allowances:    0,
-					Deductions:    0,
-					NetSalary:     emp.Salary,
+					NetSalary:     emp.Salary * 0.9, // Simplified net salary
+					PaymentStatus: "Processed",
+					PeriodStart:   lastMonthStart,
+					PeriodEnd:     lastMonthEnd,
+				})
+
+				// Future: This month's payroll (Pending)
+				thisMonthStart := time.Date(time.Now().Year(), time.Now().Month(), 1, 0, 0, 0, 0, time.Local)
+				thisMonthEnd := thisMonthStart.AddDate(0, 1, -1)
+				
+				database.DB.Create(&models.Payroll{
+					EmployeeID:    emp.ID,
+					BasicSalary:   emp.Salary,
+					NetSalary:     emp.Salary * 0.9,
 					PaymentStatus: "Pending",
-					PeriodStart:   time.Now().AddDate(0, 0, -30),
-					PeriodEnd:     time.Now(),
-				}
-				database.DB.Create(&payroll)
-			} else {
-				log.Printf("Failed to create initial employee: %v\n", err)
+					PeriodStart:   thisMonthStart,
+					PeriodEnd:     thisMonthEnd,
+				})
 			}
 		}
 	}
+
 	log.Println("Data seeding completed.")
 }

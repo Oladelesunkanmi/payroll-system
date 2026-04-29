@@ -12,14 +12,17 @@ import {
     X,
     CircleDollarSign,
     Building2,
+    ClipboardList,
+    Megaphone,
 } from 'lucide-react';
 
 const menuItems = [
     { label: 'Dashboard', icon: LayoutDashboard, path: '/dashboard' },
     { label: 'Employees', icon: Users, path: '/dashboard/employees' },
     { label: 'Departments', icon: Building2, path: '/dashboard/departments' },
-    { label: 'Attendance', icon: FileText, path: '/dashboard/attendance' },
+    { label: 'Attendance', icon: ClipboardList, path: '/dashboard/attendance' },
     { label: 'Payroll', icon: Banknote, path: '/dashboard/payroll' },
+    { label: 'Messages', icon: Megaphone, path: '/dashboard/messages' },
     { label: 'Payslips', icon: FileText, path: '/dashboard/payslips' },
     { label: 'Reports', icon: BarChart3, path: '/dashboard/reports' },
     { label: 'Settings', icon: Settings, path: '/dashboard/settings' },

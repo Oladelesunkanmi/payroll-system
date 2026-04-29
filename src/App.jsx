@@ -13,6 +13,8 @@ import Reports from './pages/Reports';
 import Departments from './pages/Departments';
 import Settings from './pages/Settings';
 import Attendance from './pages/Attendance';
+import Announcements from './pages/Announcements';
+
 
 import LandingPage from './pages/LandingPage';
 
@@ -63,6 +65,7 @@ export default function App() {
                         <Route path="attendance" element={<Attendance />} />
                         <Route path="payroll" element={<Payroll />} />
                         <Route path="payslips" element={<Payslips />} />
+                        <Route path="messages" element={<Announcements />} />
                         <Route path="reports" element={<Reports />} />
                         <Route path="settings" element={<Settings />} />
                     </Route>

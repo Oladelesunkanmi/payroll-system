@@ -128,12 +128,12 @@ export default function Reports() {
     const sortedDepts = [...(department_distribution || [])].sort((a, b) => b.total_salary - a.total_salary);
     const topDept = sortedDepts.length > 0 ? sortedDepts[0] : null;
     const topDeptPercent = topDept && totalSalary > 0 ? Math.round((topDept.total_salary / totalSalary) * 100) : 0;
-    
+
     // Sort logic for bar
     const lastMonth = monthly_totals?.[monthly_totals.length - 1];
     const prevMonth = monthly_totals?.[monthly_totals.length - 2];
-    const trend = (lastMonth && prevMonth && prevMonth.total > 0) 
-        ? ((lastMonth.total - prevMonth.total) / prevMonth.total) * 100 
+    const trend = (lastMonth && prevMonth && prevMonth.total > 0)
+        ? ((lastMonth.total - prevMonth.total) / prevMonth.total) * 100
         : 0;
 
     const insights = [
@@ -144,8 +144,8 @@ export default function Reports() {
             text: `Average salary across the entire organization stands at ₦${totalEmp > 0 ? Math.round(totalSalary / totalEmp).toLocaleString() : 0} per employee.`
         },
         {
-            text: trend !== 0 
-                ? `Payroll expenses have ${trend > 0 ? 'increased' : 'decreased'} by ${Math.abs(trend).toFixed(1)}% compared to the previous month.` 
+            text: trend !== 0
+                ? `Payroll expenses have ${trend > 0 ? 'increased' : 'decreased'} by ${Math.abs(trend).toFixed(1)}% compared to the previous month.`
                 : "Payroll expenses remained stable over the last evaluated month."
         }
     ];
@@ -158,8 +158,8 @@ export default function Reports() {
                     <h2 className="text-2xl font-black tracking-tight text-slate-800 dark:text-white">Analytics Hub</h2>
                     <div className="flex items-center gap-2 mt-1">
                         <div className="flex items-center gap-1.5">
-                            <select 
-                                value={selectedMonth} 
+                            <select
+                                value={selectedMonth}
                                 onChange={(e) => setSelectedMonth(parseInt(e.target.value))}
                                 className="bg-transparent border-none p-0 text-sm font-bold text-slate-700 dark:text-slate-300 focus:ring-0 cursor-pointer hover:text-primary-600 transition-colors"
                             >
@@ -167,8 +167,8 @@ export default function Reports() {
                                     <option key={m} value={i + 1}>{m}</option>
                                 ))}
                             </select>
-                            <select 
-                                value={selectedYear} 
+                            <select
+                                value={selectedYear}
                                 onChange={(e) => setSelectedYear(parseInt(e.target.value))}
                                 className="bg-transparent border-none p-0 text-sm font-bold text-slate-700 dark:text-slate-300 focus:ring-0 cursor-pointer hover:text-primary-600 transition-colors"
                             >
@@ -215,18 +215,25 @@ export default function Reports() {
             </div>
 
             {/* Automated Insights Box */}
-            <div className="rounded-2xl bg-gradient-to-br from-indigo-500 to-purple-600 p-6 text-white shadow-xl relative overflow-hidden">
-                <div className="absolute top-0 right-0 w-64 h-64 bg-white/10 blur-3xl rounded-full transform translate-x-1/2 -translate-y-1/2"></div>
-                <div className="flex items-center gap-2 mb-4 relative z-10">
-                    <div className="bg-white/20 p-2 rounded-lg backdrop-blur-sm">
-                        <Lightbulb className="h-5 w-5 text-yellow-300" />
+            <div className="rounded-sm  bg-gradient-to-br from-indigo-600 via-indigo-500 to-purple-600 sm:p-14 text-white shadow-2xl relative overflow-hidden min-h-[300px] flex flex-col justify-center border border-white/10">
+                <div className="absolute top-0 right-0 w-96 h-96 bg-white/10 blur-[100px] rounded-full transform translate-x-1/2 -translate-y-1/2 animate-pulse"></div>
+                <div className="absolute -bottom-24 -left-24 w-80 h-80 bg-purple-400/10 blur-[80px] rounded-full animate-pulse" style={{ animationDelay: '2s' }}></div>
+
+                <div className="flex flex-col items-center text-center gap-4 mb-12 relative z-10">
+                    <div className="bg-white/20 p-4 rounded-3xl backdrop-blur-md shadow-xl border border-white/20 mb-2">
+                        <Lightbulb className="h-8 w-8 text-yellow-300" />
                     </div>
-                    <h3 className="text-lg font-bold tracking-wide">AI Data Insights</h3>
+                    <div>
+                        <h3 className="text-3xl font-black tracking-tight">AI Multi-Factor Insights</h3>
+                        <p className="text-indigo-100 text-sm font-medium mt-1 opacity-80">Automated organizational health analysis</p>
+                    </div>
                 </div>
-                <div className="grid grid-cols-1 md:grid-cols-3 gap-4 relative z-10">
+
+                <div className="grid grid-cols-1 md:grid-cols-3 gap-8 relative z-10">
                     {insights.map((insight, idx) => (
-                        <div key={idx} className="bg-black/10 hover:bg-black/20 transition-colors rounded-xl p-4 border border-white/5 shadow-inner">
-                            <p className="text-sm font-medium text-indigo-50 leading-relaxed">
+                        <div key={idx} className="bg-white/5 hover:bg-white/10 transition-all duration-500 rounded-[2rem] p-10 border border-white/10 shadow-xl backdrop-blur-sm group flex flex-col justify-center">
+                            <div className="h-1.5 w-12 bg-indigo-400/50 rounded-full mb-6 group-hover:w-20 transition-all duration-500"></div>
+                            <p className="text-lg font-bold text-white leading-relaxed">
                                 {insight.text}
                             </p>
                         </div>
@@ -283,7 +290,7 @@ export default function Reports() {
                             {sortedDepts.map((d) => {
                                 const percent = totalSalary > 0 ? (d.total_salary / totalSalary) * 100 : 0;
                                 return (
-                                    <tr key={d.name} className="hover:bg-slate-50 dark:hover:bg-slate-800/50 transition-colors group">
+                                    <tr key={d.name} className="hover:bg-slate-50 dark:hover:bg-dark-hover/50 transition-colors group">
                                         <td className="px-6 py-5 font-bold text-slate-800 dark:text-slate-200 flex items-center gap-2">
                                             {d.name}
                                             <ChevronRight className="h-4 w-4 opacity-0 group-hover:opacity-100 text-primary-500 transition-opacity" />
@@ -294,8 +301,8 @@ export default function Reports() {
                                         <td className="px-6 py-5">
                                             <div className="flex items-center gap-3">
                                                 <div className="w-full bg-slate-100 dark:bg-slate-800 rounded-full h-2.5 overflow-hidden">
-                                                    <div 
-                                                        className="bg-indigo-500 h-2.5 rounded-full transition-all duration-1000" 
+                                                    <div
+                                                        className="bg-indigo-500 h-2.5 rounded-full transition-all duration-1000"
                                                         style={{ width: `${percent}%` }}
                                                     ></div>
                                                 </div>

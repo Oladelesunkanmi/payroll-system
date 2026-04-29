@@ -1,16 +1,14 @@
 import { useState, useEffect } from 'react';
 import { api } from '../services/api';
 import { motion, AnimatePresence } from 'framer-motion';
-import {
-    Plus, Edit3, Trash2, X, Search, Building2, Users
-} from 'lucide-react';
+import { Building2, Plus, Edit3, Trash2 } from 'lucide-react';
+import DepartmentModal from '../components/Modals/DepartmentModal';
 
 export default function Departments() {
     const [departments, setDepartments] = useState([]);
     const [search, setSearch] = useState('');
     const [modalOpen, setModalOpen] = useState(false);
-    const [editingId, setEditingId] = useState(null);
-    const [name, setName] = useState('');
+    const [editingDepartment, setEditingDepartment] = useState(null);
     const [loading, setLoading] = useState(true);
 
     useEffect(() => {
@@ -33,8 +31,15 @@ export default function Departments() {
         d.name?.toLowerCase().includes(search.toLowerCase())
     );
 
-    const openAdd = () => { setEditingId(null); setName(''); setModalOpen(true); };
-    const openEdit = (d) => { setEditingId(d.id); setName(d.name); setModalOpen(true); };
+    const openAdd = () => {
+        setEditingDepartment(null);
+        setModalOpen(true);
+    };
+
+    const openEdit = (dept) => {
+        setEditingDepartment(dept);
+        setModalOpen(true);
+    };
 
     const handleDelete = async (id) => {
         if (confirm('Are you sure you want to delete this department?')) {
@@ -47,27 +52,26 @@ export default function Departments() {
         }
     };
 
-    const handleSave = async (e) => {
-        e.preventDefault();
+    const handleSave = async (name) => {
         try {
-            if (editingId) {
-                const updated = await api.updateDepartment(editingId, { name });
-                setDepartments(prev => prev.map(d => d.id === editingId ? updated : d));
+            if (editingDepartment) {
+                const updated = await api.updateDepartment(editingDepartment.id, { name });
+                setDepartments((prev) => prev.map((d) => (d.id === editingDepartment.id ? updated : d)));
             } else {
                 const created = await api.createDepartment({ name });
-                setDepartments(prev => [...prev, created]);
+                setDepartments((prev) => [...prev, created]);
             }
             setModalOpen(false);
         } catch (error) {
             alert('Failed to save department: ' + error.message);
         }
     };
-    
+
     const containerVariants = {
         hidden: { opacity: 0 },
         visible: { opacity: 1, transition: { staggerChildren: 0.1 } }
     };
-    
+
     const itemVariants = {
         hidden: { y: 20, opacity: 0 },
         visible: { y: 0, opacity: 1, transition: { type: 'spring', stiffness: 300, damping: 24 } }
@@ -96,21 +100,19 @@ export default function Departments() {
             {/* Filter Bar */}
             <motion.div variants={itemVariants} className="flex flex-col sm:flex-row">
                 <div className="relative w-full sm:max-w-md">
-                    <Search className="pointer-events-none absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400 dark:text-slate-500" />
                     <input
                         type="text"
-                        placeholder="Search departments..."
                         value={search}
                         onChange={(e) => setSearch(e.target.value)}
-                        className="h-[48px] w-full rounded-2xl border border-slate-200 dark:border-white/5 bg-white dark:bg-slate-900 pl-12 pr-4 text-sm font-medium text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:border-primary-400 focus:ring-4 focus:ring-primary-100 dark:focus:ring-primary-900/30 focus:outline-none shadow-sm transition-all"
+                        className="h-[48px] w-full rounded-2xl border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-bg px-5 pr-4 text-sm font-medium text-slate-700 dark:text-slate-200 placeholder-slate-400 dark:placeholder-slate-500 focus:border-primary-400 focus:ring-4 focus:ring-primary-100 dark:focus:ring-primary-900/30 focus:outline-none shadow-sm transition-all"
                     />
                 </div>
             </motion.div>
 
             {/* Table */}
-            <motion.div variants={itemVariants} className="overflow-hidden rounded-3xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-slate-900 shadow-xl shadow-slate-200/40 dark:shadow-black/20">
+            <motion.div variants={itemVariants} className="overflow-hidden rounded-3xl border border-slate-200/80 dark:border-dark-border bg-white dark:bg-dark-surface shadow-xl shadow-slate-200/40 dark:shadow-black/20">
                 <div className="overflow-x-auto custom-scrollbar">
-                    <table className="w-full min-w-[500px] text-left text-sm">
+                    <table className="w-[60%] min-w-[400px] text-left text-sm">
                         <thead>
                             <tr className="border-b border-slate-100 dark:border-white/5 bg-slate-50/50 dark:bg-slate-800/20">
                                 <th className="whitespace-nowrap px-6 py-4 font-bold text-slate-500 dark:text-slate-400 uppercase tracking-wider text-xs w-1/4">ID</th>
@@ -161,58 +163,12 @@ export default function Departments() {
             </motion.div>
 
             {/* Modal */}
-            <AnimatePresence>
-                {modalOpen && (
-                    <div className="fixed inset-0 z-[100] flex items-center justify-center bg-slate-900/40 backdrop-blur-sm p-4">
-                        <motion.div 
-                            initial={{ opacity: 0, scale: 0.95, y: 20 }}
-                            animate={{ opacity: 1, scale: 1, y: 0 }}
-                            exit={{ opacity: 0, scale: 0.95, y: 20 }}
-                            className="w-full max-w-md max-h-[90vh] overflow-y-auto rounded-3xl bg-white dark:bg-slate-900 p-6 sm:p-8 shadow-2xl custom-scrollbar border border-slate-200 dark:border-white/10"
-                        >
-                            <div className="mb-6 flex items-center justify-between border-b border-slate-100 dark:border-dark-border pb-4">
-                                <div>
-                                    <h3 className="text-xl font-bold text-slate-800 dark:text-white flex items-center gap-2">
-                                        <div className="p-2 rounded-lg bg-primary-100 dark:bg-primary-900/30 text-primary-600 dark:text-primary-400">
-                                            {editingId ? <Edit3 className="h-5 w-5" /> : <Building2 className="h-5 w-5" />}
-                                        </div>
-                                        {editingId ? 'Edit Department' : 'Add Department'}
-                                    </h3>
-                                </div>
-                                <button
-                                    type="button"
-                                    onClick={() => setModalOpen(false)}
-                                    className="rounded-full p-2 h-10 w-10 flex items-center justify-center text-slate-400 hover:bg-slate-100 dark:hover:bg-slate-800 hover:text-slate-600 dark:hover:text-slate-200 transition-colors"
-                                >
-                                    <X className="h-6 w-6" />
-                                </button>
-                            </div>
-                            <form onSubmit={handleSave} className="space-y-6">
-                                <div className="space-y-1.5">
-                                    <label className="text-xs font-bold uppercase tracking-wider text-slate-500 ml-1">Department Name</label>
-                                    <input
-                                        required
-                                        type="text"
-                                        value={name}
-                                        onChange={(e) => setName(e.target.value)}
-                                        placeholder="e.g. Engineering"
-                                        className="h-[44px] w-full rounded-xl border border-slate-200 dark:border-dark-border bg-slate-50/50 dark:bg-slate-900/50 px-4 text-sm text-slate-700 dark:text-slate-200 focus:bg-white dark:focus:bg-slate-900 focus:border-primary-400 focus:ring-4 focus:ring-primary-100 dark:focus:ring-primary-900/30 focus:outline-none transition-all"
-                                    />
-                                </div>
-
-                                <div className="mt-8 flex justify-end gap-3 border-t border-slate-100 dark:border-white/5 pt-5">
-                                    <button type="button" onClick={() => setModalOpen(false)} className="rounded-xl px-6 py-3 text-sm font-bold text-slate-600 hover:bg-slate-100 dark:text-slate-300 dark:hover:bg-slate-800 transition-colors h-[44px] flex items-center">
-                                        Cancel
-                                    </button>
-                                    <button type="submit" className="rounded-xl bg-primary-600 px-8 py-3 text-sm font-bold text-white shadow-lg shadow-primary-500/30 transition-all hover:bg-primary-700 hover:shadow-primary-500/40 h-[44px] flex items-center active:scale-95">
-                                        {editingId ? 'Update' : 'Create'}
-                                    </button>
-                                </div>
-                            </form>
-                        </motion.div>
-                    </div>
-                )}
-            </AnimatePresence>
+            <DepartmentModal 
+                isOpen={modalOpen}
+                onClose={() => setModalOpen(false)}
+                onSave={handleSave}
+                editingDepartment={editingDepartment}
+            />
         </motion.div>
     );
 }

@@ -96,6 +96,7 @@ export const api = {
     markAllNotificationsRead: () => apiRequest('/api/notifications/read-all', 'POST'),
     getMyPayrolls: (employeeId) => apiRequest(`/api/payrolls/employee/${employeeId}`),
     processBulkTransfer: () => apiRequest('/api/payrolls/bulk-transfer', 'POST'),
+    bulkMarkPaid: (month, year) => apiRequest(`/api/payrolls/bulk-mark-paid?month=${month}&year=${year}`, 'POST'),
 
     // Attendance
     getAttendanceByDate: (date) => apiRequest(`/api/attendance?date=${date}`),
@@ -103,4 +104,9 @@ export const api = {
     bulkMarkAttendance: (data) => apiRequest('/api/attendance/bulk', 'POST', data),
     getEmployeeAttendance: (id, month, year) => apiRequest(`/api/attendance/employee/${id}?month=${month}&year=${year}`),
     getAttendanceSummary: (id, start, end) => apiRequest(`/api/attendance/summary/${id}?start=${start}&end=${end}`),
+
+    // Announcements
+    getAnnouncements: () => apiRequest('/api/announcements'),
+    createAnnouncement: (data) => apiRequest('/api/announcements', 'POST', data),
+    deleteAnnouncement: (id) => apiRequest(`/api/announcements/${id}`, 'DELETE'),
 };

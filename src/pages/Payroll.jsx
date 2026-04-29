@@ -151,6 +151,22 @@ export default function Payroll() {
         }
     };
 
+    const handlePayAll = async () => {
+        if (!window.confirm('This will mark all records for this month as paid. Continue?')) return;
+        
+        const loading = toast.loading('Marking all records as paid...');
+        setProcessing(true);
+        try {
+            const result = await api.bulkMarkPaid(selectedMonth, selectedYear);
+            toast.success(result.message, { id: loading });
+            fetchPayrolls();
+        } catch (error) {
+            toast.error('Failed to mark as paid: ' + error.message, { id: loading });
+        } finally {
+            setProcessing(false);
+        }
+    };
+
     const handlePaystack = async () => {
         if (!window.confirm('This will initiate bulk transfers via Paystack. Continue?')) return;
         
@@ -229,9 +245,17 @@ export default function Payroll() {
                     </div>
                 </div>
                 <div className="flex flex-col sm:flex-row gap-3">
-                    <button onClick={handleGenerate} className="inline-flex h-[44px] items-center justify-center gap-2 rounded-xl border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-5 text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-slate-800 shadow-sm transition-all active:scale-95">
+                    <button onClick={handleGenerate} className="inline-flex h-[44px] items-center justify-center gap-2 rounded-xl border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-surface px-5 text-sm font-bold text-slate-700 dark:text-slate-200 hover:bg-slate-50 dark:hover:bg-dark-hover shadow-sm transition-all active:scale-95">
                         <Calculator className="h-4 w-4 shrink-0" />
                         <span>Generate Monthly List</span>
+                    </button>
+                    <button 
+                        onClick={handlePayAll} 
+                        disabled={processing || records.filter(r => r.payment_status !== 'Processed').length === 0}
+                        className="inline-flex h-[44px] items-center justify-center gap-2 rounded-xl bg-slate-900 dark:bg-white px-6 text-sm font-bold text-white dark:text-slate-900 shadow-lg shadow-slate-500/20 transition-all hover:bg-slate-800 dark:hover:bg-dark-hover disabled:opacity-50 disabled:cursor-not-allowed active:scale-95"
+                    >
+                        <CheckCircle2 className="h-4 w-4 shrink-0" />
+                        <span>Pay All</span>
                     </button>
                     <button 
                         onClick={handlePaystack} 
@@ -243,7 +267,7 @@ export default function Payroll() {
                         ) : (
                             <FileSpreadsheet className="h-4 w-4 shrink-0" />
                         )}
-                        <span>Process via Paystack</span>
+                        <span>Paystack</span>
                     </button>
                 </div>
             </motion.div>
@@ -257,7 +281,7 @@ export default function Payroll() {
 
             {/* Summary cards */}
             <motion.div variants={itemVariants} className="grid grid-cols-1 gap-4 sm:grid-cols-3">
-                <div className="rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white/80 dark:bg-slate-900/50 p-6 shadow-sm backdrop-blur-xl transition-all hover:-translate-y-1 hover:shadow-md">
+                <div className="rounded-2xl border border-slate-200/80 dark:border-dark-border bg-white/80 dark:bg-dark-surface p-6 shadow-sm backdrop-blur-xl transition-all hover:-translate-y-1 hover:shadow-md">
                     <div className="flex items-center gap-4">
                         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-violet-100 dark:bg-violet-900/30 text-violet-600 dark:text-violet-400 drop-shadow-sm">
                             <DollarSign className="h-6 w-6" />
@@ -281,7 +305,7 @@ export default function Payroll() {
                         </div>
                     </div>
                 </div>
-                <div className="rounded-2xl border border-slate-200/80 dark:border-white/5 bg-white/80 dark:bg-slate-900/50 p-6 shadow-sm backdrop-blur-xl transition-all hover:-translate-y-1 hover:shadow-md">
+                <div className="rounded-2xl border border-slate-200/80 dark:border-dark-border bg-white/80 dark:bg-dark-surface p-6 shadow-sm backdrop-blur-xl transition-all hover:-translate-y-1 hover:shadow-md">
                     <div className="flex items-center gap-4">
                         <div className="flex h-12 w-12 shrink-0 items-center justify-center rounded-xl bg-amber-100 dark:bg-amber-900/30 text-amber-600 dark:text-amber-400 drop-shadow-sm">
                             <Clock className="h-6 w-6" />
@@ -295,7 +319,7 @@ export default function Payroll() {
             </motion.div>
 
             {/* Payroll table */}
-            <motion.div variants={itemVariants} className="overflow-hidden rounded-3xl border border-slate-200/80 dark:border-white/5 bg-white dark:bg-slate-900 shadow-xl shadow-slate-200/40 dark:shadow-black/20">
+            <motion.div variants={itemVariants} className="overflow-hidden rounded-3xl border border-slate-200/80 dark:border-dark-border bg-white dark:bg-dark-surface shadow-xl shadow-slate-200/40 dark:shadow-black/20">
                 <div className="overflow-x-auto custom-scrollbar">
                     <table className="w-full min-w-[1000px] text-left text-sm">
                         <thead>
@@ -354,8 +378,8 @@ export default function Payroll() {
                                         <input
                                             type="number"
                                             value={rec.basic_salary}
-                                            onChange={(e) => handleFieldChange(rec.id, 'basic_salary', e.target.value)}
-                                            className="h-[36px] w-[140px] rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 text-right text-sm font-mono font-medium text-slate-700 dark:text-slate-200 transition-all focus:border-primary-400 focus:ring-2 focus:ring-primary-100 dark:focus:ring-primary-900/30 focus:outline-none"
+                                            readOnly
+                                            className="h-[36px] w-[140px] rounded-lg border border-slate-200 dark:border-dark-border bg-slate-50 dark:bg-dark-bg/50 px-3 text-right text-sm font-mono font-medium text-slate-500 dark:text-slate-400 cursor-not-allowed opacity-70 focus:outline-none shadow-inner"
                                         />
                                     </td>
                                     <td className="whitespace-nowrap px-6 py-4 text-right">
@@ -363,7 +387,7 @@ export default function Payroll() {
                                             type="number"
                                             value={rec.allowances}
                                             onChange={(e) => handleFieldChange(rec.id, 'allowances', e.target.value)}
-                                            className="h-[36px] w-[100px] rounded-lg border border-slate-200 dark:border-white/10 bg-white dark:bg-slate-900 px-3 text-right text-sm font-mono font-medium text-slate-700 dark:text-slate-200 transition-all focus:border-primary-400 focus:ring-2 focus:ring-primary-100 dark:focus:ring-primary-900/30 focus:outline-none"
+                                            className="h-[36px] w-[100px] rounded-lg border border-slate-200 dark:border-dark-border bg-white dark:bg-dark-bg px-3 text-right text-sm font-mono font-medium text-slate-700 dark:text-slate-200 transition-all focus:border-primary-400 focus:ring-2 focus:ring-primary-100 dark:focus:ring-primary-900/30 focus:outline-none"
                                         />
                                     </td>
                                     <td className="whitespace-nowrap px-6 py-4 text-right font-mono text-sm font-bold text-slate-500 dark:text-slate-400">
